@@ -214,6 +214,7 @@ export const ReportView: React.FC<ReportViewProps> = ({ report, onBackToEdit }) 
                       src={`${basePath}/assets/logo.png`}
                       alt="CSOAM" 
                       className="h-12 w-auto object-contain"
+                      style={{ maxHeight: '48px', width: 'auto' }}
                     />
                   </div>
                   <div>

@@ -31,6 +31,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 src={`${basePath}/assets/logo.png`}
                 alt="CSOAM" 
                 className="w-full h-full object-contain"
+                style={{ maxHeight: '36px', maxWidth: '36px' }}
                 onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
               />
             </div>

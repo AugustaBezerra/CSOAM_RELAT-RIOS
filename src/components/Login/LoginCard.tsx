@@ -56,11 +56,12 @@ export const LoginCard: React.FC<LoginCardProps> = ({ onLoginSuccess }) => {
           {/* Topo: Logo CSOAM */}
           <div className="relative z-10">
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-2xl bg-white flex items-center justify-center shadow-lg p-1.5">
+              <div className="w-14 h-14 rounded-2xl bg-white flex items-center justify-center shadow-lg p-1.5">
                 <img 
                   src={`${basePath}/assets/logo.png`}
                   alt="Logo CSOAM" 
                   className="w-full h-full object-contain"
+                  style={{ maxHeight: '48px', maxWidth: '48px' }}
                   onError={(e) => {
                     (e.target as HTMLElement).style.display = 'none';
                   }}
