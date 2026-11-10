@@ -1,8 +1,24 @@
 import { DailyReport } from './types';
 
-// Formulário inicial ZERADO para o dia de hoje
+// Retorna a data atual no fuso horário oficial de Manaus (America/Manaus - UTC-4)
+export const getManausDateToday = (): string => {
+  try {
+    const d = new Date();
+    const formatter = new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'America/Manaus',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit'
+    });
+    return formatter.format(d); // Formato YYYY-MM-DD
+  } catch (e) {
+    return new Date().toISOString().split('T')[0];
+  }
+};
+
+// Formulário inicial ZERADO para o dia de hoje (Manaus)
 export const getEmptyDailyReport = (): DailyReport => {
-  const today = new Date().toISOString().split('T')[0];
+  const today = getManausDateToday();
   return {
     data: today,
     unidade: 'CSOAM – Matriz',
@@ -54,7 +70,7 @@ export const getEmptyDailyReport = (): DailyReport => {
 
 export const emptyDailyReport = getEmptyDailyReport();
 
-// Relatório salvo do dia 09/11 para consulta no Histórico / Relatórios
+// Relatório histórico do dia 09/11 para consulta no Histórico / Relatórios
 export const initialReportData: DailyReport = {
   id: 'rel_09_11_2026',
   data: '2026-11-09',

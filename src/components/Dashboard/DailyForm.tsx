@@ -159,6 +159,10 @@ export const DailyForm: React.FC<DailyFormProps> = ({
               onChange={(e) => handleMetaChange('data', e.target.value)}
               className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 focus:border-emerald-600 focus:ring-4 focus:ring-emerald-600/10 text-sm font-medium text-gray-900 bg-gray-50/50"
             />
+            <p className="text-[11px] text-emerald-700 font-semibold mt-1 flex items-center gap-1">
+              <span>🕒 Manaus:</span>
+              <span>{report.data ? report.data.split('-').reverse().join('/') : ''}</span>
+            </p>
           </div>
 
           <div>

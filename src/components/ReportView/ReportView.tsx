@@ -208,22 +208,16 @@ export const ReportView: React.FC<ReportViewProps> = ({ report, onBackToEdit }) 
             <div className="flex items-center justify-between pb-3 gap-2">
               {/* Logos CSOAM & ASO */}
               <div className="flex items-center gap-3 shrink-0">
-                <div className="flex items-center gap-2.5">
-                  <div className="h-12 flex items-center justify-center">
-                    <img 
-                      src={`${basePath}/assets/logo.png`}
-                      alt="CSOAM" 
-                      className="h-12 w-auto object-contain"
-                      style={{ maxHeight: '48px', width: 'auto' }}
-                    />
-                  </div>
-                  <div>
-                    <h1 className="text-2xl font-black text-[#006B35] leading-none tracking-tight">CSOAM</h1>
-                    <p className="text-[10px] text-[#008C45] font-bold">CENTRO DE SAÚDE OCUPACIONAL DA AMAZÔNIA</p>
-                  </div>
+                <div className="h-14 flex items-center justify-center">
+                  <img 
+                    src={`${basePath}/assets/logo.png`}
+                    alt="Logo CSOAM" 
+                    className="h-14 w-auto object-contain"
+                    style={{ maxHeight: '54px', width: 'auto' }}
+                  />
                 </div>
 
-                <div className="h-8 w-px bg-gray-300 mx-1" />
+                <div className="h-10 w-px bg-gray-300 mx-1" />
 
                 <div className="flex items-center gap-1.5">
                   <span className="text-xl font-black text-[#006B35]">ASO</span>
