@@ -28,7 +28,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-emerald-50 border border-emerald-100 p-1 flex items-center justify-center">
               <img 
-                src={`${basePath}/assets/csoam_aso_logo.png`}
+                src={`${basePath}/assets/logo.png`}
                 alt="CSOAM" 
                 className="w-full h-full object-contain"
                 onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}

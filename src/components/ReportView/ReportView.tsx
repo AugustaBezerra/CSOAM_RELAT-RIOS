@@ -205,15 +205,15 @@ export const ReportView: React.FC<ReportViewProps> = ({ report, onBackToEdit }) 
           
           {/* 1. CABEÇALHO COMPLETO INSTITUCIONAL */}
           <div>
-            <div className="flex items-center justify-between pb-3">
+            <div className="flex items-center justify-between pb-3 gap-2">
               {/* Logos CSOAM & ASO */}
-              <div className="flex items-center gap-4">
-                <div className="flex items-center gap-2">
-                  <div className="w-12 h-12 flex items-center justify-center">
+              <div className="flex items-center gap-3 shrink-0">
+                <div className="flex items-center gap-2.5">
+                  <div className="h-12 flex items-center justify-center">
                     <img 
-                      src={`${basePath}/assets/csoam_aso_logo.png`}
-                      alt="CSOAM e ASO" 
-                      className="h-10 w-auto object-contain"
+                      src={`${basePath}/assets/logo.png`}
+                      alt="CSOAM" 
+                      className="h-12 w-auto object-contain"
                     />
                   </div>
                   <div>
@@ -222,33 +222,33 @@ export const ReportView: React.FC<ReportViewProps> = ({ report, onBackToEdit }) 
                   </div>
                 </div>
 
-                <div className="h-8 w-px bg-gray-300 mx-2" />
+                <div className="h-8 w-px bg-gray-300 mx-1" />
 
                 <div className="flex items-center gap-1.5">
                   <span className="text-xl font-black text-[#006B35]">ASO</span>
-                  <span className="text-[9px] text-gray-500 font-semibold leading-tight max-w-[70px]">AMAZON SAÚDE OCUPACIONAL</span>
+                  <span className="text-[9px] text-gray-500 font-semibold leading-tight max-w-[75px]">AMAZON SAÚDE OCUPACIONAL</span>
                 </div>
               </div>
 
               {/* Título Central */}
-              <div className="text-center">
+              <div className="text-center flex-1 px-2">
                 <div className="inline-flex items-center gap-2">
                   <span className="text-emerald-700 text-xl font-black">📈</span>
-                  <h2 className="text-xl font-black text-[#0B3C2A] tracking-wider uppercase">
+                  <h2 className="text-xl font-black text-[#0B3C2A] tracking-wider uppercase whitespace-nowrap">
                     Relatório Diário de Atendimentos
                   </h2>
                 </div>
                 <p className="text-xs text-gray-500 font-semibold mt-0.5">Produção Operacional Integrada</p>
               </div>
 
-              {/* Metadados Direita (Data e Locação) */}
-              <div className="text-right text-xs space-y-1">
-                <div className="inline-flex items-center gap-1.5 text-gray-700 font-bold">
-                  <span className="text-emerald-700">📅</span>
+              {/* Metadados Direita (Data e Locação com emojis perfeitamente alinhados) */}
+              <div className="flex flex-col items-end justify-center text-xs space-y-1.5 shrink-0 pl-2">
+                <div className="flex items-center gap-2 text-gray-800 font-bold whitespace-nowrap bg-emerald-50/70 px-3 py-1 rounded-lg border border-emerald-200/80 shadow-2xs">
+                  <span className="text-sm">📅</span>
                   <span>Data: <strong className="text-gray-900">{formatDateDisplay(report.data)}</strong></span>
                 </div>
-                <div className="flex items-center justify-end gap-1.5 text-gray-700 font-bold">
-                  <span className="text-emerald-700">📍</span>
+                <div className="flex items-center gap-2 text-gray-800 font-bold whitespace-nowrap bg-emerald-50/70 px-3 py-1 rounded-lg border border-emerald-200/80 shadow-2xs">
+                  <span className="text-sm">📍</span>
                   <span>Locação: <strong className="text-gray-900">{report.unidade || 'CSOAM – Matriz'}</strong></span>
                 </div>
               </div>

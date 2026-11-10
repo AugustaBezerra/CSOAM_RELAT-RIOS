@@ -58,7 +58,7 @@ export const LoginCard: React.FC<LoginCardProps> = ({ onLoginSuccess }) => {
             <div className="flex items-center gap-3">
               <div className="w-12 h-12 rounded-2xl bg-white flex items-center justify-center shadow-lg p-1.5">
                 <img 
-                  src={`${basePath}/assets/csoam_aso_logo.png`}
+                  src={`${basePath}/assets/logo.png`}
                   alt="Logo CSOAM" 
                   className="w-full h-full object-contain"
                   onError={(e) => {
