@@ -1,6 +1,62 @@
 import { DailyReport } from './types';
 
+// Formulário inicial ZERADO para o dia de hoje
+export const getEmptyDailyReport = (): DailyReport => {
+  const today = new Date().toISOString().split('T')[0];
+  return {
+    data: today,
+    unidade: 'CSOAM – Matriz',
+    responsavel: 'Equipe de Atendimento',
+    turno: 'Integral',
+    medicoPlantao: 'dr_cleverson',
+    status: 'draft',
+    atendimentos: {
+      admissional: 0,
+      periodico: 0,
+      demissional: 0,
+      mudancaRisco: 0,
+      consultas: 0,
+    },
+    enfermagem: {
+      triagem: 0,
+      acuidadeVisual: 0,
+      raioX: 0,
+      ergometrico: 0,
+      ecg: 0,
+      eeg: 0,
+      espirometria: 0,
+      dinamometria: 0,
+    },
+    audiometria: {
+      admissional: 0,
+      periodico: 0,
+      demissional: 0,
+    },
+    coletas: {
+      ocupacional: 0,
+      particular: 0,
+    },
+    exames: {
+      sangue: 0,
+      acidos: 0,
+      epf: 0,
+      eas: 0,
+      coprocultura: 0,
+      toxicologico: 0,
+      baar: 0,
+      micologico: 0,
+      outros: [],
+    },
+    empresas: [],
+    observacoes: '',
+  };
+};
+
+export const emptyDailyReport = getEmptyDailyReport();
+
+// Relatório salvo do dia 09/11 para consulta no Histórico / Relatórios
 export const initialReportData: DailyReport = {
+  id: 'rel_09_11_2026',
   data: '2026-11-09',
   unidade: 'CSOAM – Matriz',
   responsavel: 'Rosineide Souza',

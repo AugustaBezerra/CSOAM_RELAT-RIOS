@@ -7,14 +7,16 @@ import { DailyForm } from '@/components/Dashboard/DailyForm';
 import { ReportView } from '@/components/ReportView/ReportView';
 import { HistoryView } from '@/components/History/HistoryView';
 import { DailyReport } from '@/lib/types';
-import { initialReportData } from '@/lib/mockData';
+import { initialReportData, getEmptyDailyReport } from '@/lib/mockData';
 import { saveReportToFirebase, getReportsFromFirebase } from '@/lib/firebase';
 import { CheckCircle2, AlertCircle } from 'lucide-react';
 
 export default function Home() {
   const [user, setUser] = useState<{ name: string; role: string; email: string } | null>(null);
-  const [currentTab, setCurrentTab] = useState<'form' | 'report' | 'history'>('form');
-  const [currentReport, setCurrentReport] = useState<DailyReport>(initialReportData);
+  // A aba inicial é 'history' (Relatórios), seguida de 'form' (Preenchimento) e 'report' (Relatório do Médico)
+  const [currentTab, setCurrentTab] = useState<'form' | 'report' | 'history'>('history');
+  // O formulário de preenchimento começa 100% ZERADO
+  const [currentReport, setCurrentReport] = useState<DailyReport>(getEmptyDailyReport());
   const [reportsList, setReportsList] = useState<DailyReport[]>([initialReportData]);
   const [saving, setSaving] = useState(false);
   const [toastMessage, setToastMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
@@ -38,8 +40,6 @@ export default function Home() {
         const fetched = await getReportsFromFirebase();
         if (fetched && fetched.length > 0) {
           setReportsList(fetched);
-          // Set the latest report as current
-          setCurrentReport(fetched[0]);
         }
       } catch (e) {
         console.warn("Could not load initial reports:", e);
@@ -87,7 +87,7 @@ export default function Home() {
         return [updatedReport, ...prev];
       });
 
-      showToast("Relatório salvo com sucesso no Firebase!", "success");
+      showToast("Relatório salvo com sucesso!", "success");
     } catch (e) {
       console.error("Save error:", e);
       showToast("Erro ao salvar relatório.", "error");
@@ -107,23 +107,10 @@ export default function Home() {
   };
 
   const handleNewReport = () => {
-    const today = new Date().toISOString().split('T')[0];
-    const newEmptyReport: DailyReport = {
-      ...initialReportData,
-      id: undefined,
-      data: today,
-      responsavel: user?.name || 'Rosineide Souza',
-      observacoes: '',
-      atendimentos: { admissional: 0, periodico: 0, demissional: 0, mudancaRisco: 0, consultas: 0 },
-      enfermagem: { triagem: 0, acuidadeVisual: 0, raioX: 0, ergometrico: 0, ecg: 0, eeg: 0, espirometria: 0, dinamometria: 0 },
-      audiometria: { admissional: 0, periodico: 0, demissional: 0 },
-      coletas: { ocupacional: 0, particular: 0 },
-      exames: { sangue: 0, acidos: 0, epf: 0, eas: 0, coprocultura: 0, toxicologico: 0, baar: 0, micologico: 0 },
-      empresas: []
-    };
-    setCurrentReport(newEmptyReport);
+    const blankReport = getEmptyDailyReport();
+    setCurrentReport(blankReport);
     setCurrentTab('form');
-    showToast("Novo formulário em branco iniciado para hoje!", "success");
+    showToast("Novo formulário em branco iniciado!", "success");
   };
 
   const handleDeleteReport = (id?: string) => {
@@ -134,7 +121,7 @@ export default function Home() {
     }
   };
 
-  // Se não estiver logado, exibe a tela de login
+  // Se não estiver logado, exibe a tela de login protegida
   if (!user) {
     return <LoginCard onLoginSuccess={handleLoginSuccess} />;
   }
@@ -154,7 +141,7 @@ export default function Home() {
         </div>
       )}
 
-      {/* Barra de Navegação Superior */}
+      {/* Barra de Navegação Superior (Relatórios -> Preenchimento -> Relatório do Médico) */}
       <Navbar
         currentTab={currentTab}
         onTabChange={setCurrentTab}
@@ -165,6 +152,16 @@ export default function Home() {
 
       {/* Conteúdo Dinâmico por Aba */}
       <main className="flex-1 pb-16">
+        {currentTab === 'history' && (
+          <HistoryView
+            reports={reportsList}
+            onSelectReport={handleSelectReport}
+            onEditReport={handleEditReport}
+            onNewReport={handleNewReport}
+            onDeleteReport={handleDeleteReport}
+          />
+        )}
+
         {currentTab === 'form' && (
           <DailyForm
             report={currentReport}
@@ -179,16 +176,6 @@ export default function Home() {
           <ReportView
             report={currentReport}
             onBackToEdit={() => setCurrentTab('form')}
-          />
-        )}
-
-        {currentTab === 'history' && (
-          <HistoryView
-            reports={reportsList}
-            onSelectReport={handleSelectReport}
-            onEditReport={handleEditReport}
-            onNewReport={handleNewReport}
-            onDeleteReport={handleDeleteReport}
           />
         )}
       </main>

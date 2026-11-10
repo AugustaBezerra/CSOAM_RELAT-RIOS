@@ -46,6 +46,18 @@ export const Navbar: React.FC<NavbarProps> = ({
           {/* Abas de Navegação Central */}
           <nav className="flex items-center bg-gray-100/80 p-1 rounded-2xl border border-gray-200/60 shadow-inner">
             <button
+              onClick={() => onTabChange('history')}
+              className={`flex items-center gap-2 px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all ${
+                currentTab === 'history'
+                  ? 'bg-white text-emerald-800 shadow-sm border border-emerald-100'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              <History className="w-4 h-4 text-emerald-600" />
+              <span>Relatórios</span>
+            </button>
+
+            <button
               onClick={() => onTabChange('form')}
               className={`flex items-center gap-2 px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all ${
                 currentTab === 'form'
@@ -67,18 +79,6 @@ export const Navbar: React.FC<NavbarProps> = ({
             >
               <Eye className="w-4 h-4 text-blue-600" />
               <span>Relatório do Médico</span>
-            </button>
-
-            <button
-              onClick={() => onTabChange('history')}
-              className={`flex items-center gap-2 px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all ${
-                currentTab === 'history'
-                  ? 'bg-white text-emerald-800 shadow-sm border border-emerald-100'
-                  : 'text-gray-600 hover:text-gray-900'
-              }`}
-            >
-              <History className="w-4 h-4 text-emerald-600" />
-              <span className="hidden sm:inline">Histórico</span>
             </button>
           </nav>
 

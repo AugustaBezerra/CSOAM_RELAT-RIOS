@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from 'react';
-import { User, Lock, Eye, EyeOff, ShieldCheck, HeartPulse, HardHat } from 'lucide-react';
+import { User, Lock, Eye, EyeOff, ShieldCheck, HeartPulse, HardHat, AlertCircle } from 'lucide-react';
 import { basePath } from '@/lib/constants';
 
 interface LoginCardProps {
@@ -9,31 +9,37 @@ interface LoginCardProps {
 }
 
 export const LoginCard: React.FC<LoginCardProps> = ({ onLoginSuccess }) => {
-  const [email, setEmail] = useState('rosineide.souza@csoam.com.br');
-  const [password, setPassword] = useState('••••••••');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [rememberMe, setRememberMe] = useState(true);
+  const [rememberMe, setRememberMe] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    setError(null);
     setLoading(true);
+
+    const cleanEmail = email.trim().toLowerCase();
+    const cleanPass = password.trim();
+
+    // Credenciais autorizadas para a equipe
+    const validEmails = ['servico@csoam.com.br', 'servico@cosam.com.br', 'servico'];
+    const validPasswords = ['csoam2026', 'Csoam@2026', 'csoam@2026', 'Csoam2026'];
+
     setTimeout(() => {
-      onLoginSuccess({
-        name: 'Rosineide Souza',
-        role: 'TET / Enfermagem',
-        email: email || 'rosineide.souza@csoam.com.br'
-      });
+      if (validEmails.includes(cleanEmail) && validPasswords.includes(cleanPass)) {
+        onLoginSuccess({
+          name: 'Equipe de Atendimento',
+          role: 'Operacional / Enfermagem',
+          email: 'servico@csoam.com.br'
+        });
+      } else {
+        setError('E-mail ou senha incorretos. Acesso restrito aos colaboradores da CSOAM.');
+      }
       setLoading(false);
     }, 400);
-  };
-
-  const handleQuickDemo = (name: string, role: string) => {
-    onLoginSuccess({
-      name,
-      role,
-      email: `${name.toLowerCase().replace(' ', '.')}@csoam.com.br`
-    });
   };
 
   return (
@@ -56,7 +62,6 @@ export const LoginCard: React.FC<LoginCardProps> = ({ onLoginSuccess }) => {
                   alt="Logo CSOAM" 
                   className="w-full h-full object-contain"
                   onError={(e) => {
-                    // Fallback visual icon
                     (e.target as HTMLElement).style.display = 'none';
                   }}
                 />
@@ -83,7 +88,7 @@ export const LoginCard: React.FC<LoginCardProps> = ({ onLoginSuccess }) => {
               </div>
             </div>
             <p className="mt-4 text-sm text-emerald-100 font-light max-w-xs">
-              Ambiente seguro para registro e emissão dos relatórios de saúde ocupacional da clínica.
+              Ambiente restrito e seguro para preenchimento e emissão dos relatórios de saúde ocupacional da clínica.
             </p>
           </div>
 
@@ -98,9 +103,9 @@ export const LoginCard: React.FC<LoginCardProps> = ({ onLoginSuccess }) => {
         <div className="md:w-1/2 p-8 sm:p-12 flex flex-col justify-between bg-white">
           <div>
             <div className="mb-8">
-              <h2 className="text-3xl font-black text-gray-900 tracking-tight">Bem-vinda de volta!</h2>
+              <h2 className="text-3xl font-black text-gray-900 tracking-tight">Acesso da Equipe</h2>
               <p className="mt-2 text-sm text-gray-500">
-                Acesse sua conta para gerenciar a produção operacional da clínica.
+                Digite suas credenciais corporativas para acessar os relatórios da clínica.
               </p>
             </div>
 
@@ -119,7 +124,7 @@ export const LoginCard: React.FC<LoginCardProps> = ({ onLoginSuccess }) => {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
-                    placeholder="Digite seu usuário ou e-mail"
+                    placeholder="servico@csoam.com.br"
                     className="w-full pl-11 pr-4 py-3 rounded-xl border border-gray-200 focus:border-[#008C45] focus:ring-4 focus:ring-[#008C45]/10 text-gray-800 text-sm transition-all outline-none bg-gray-50/50 hover:bg-white"
                   />
                 </div>
@@ -139,7 +144,7 @@ export const LoginCard: React.FC<LoginCardProps> = ({ onLoginSuccess }) => {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
-                    placeholder="Digite sua senha"
+                    placeholder="Digite a senha da equipe"
                     className="w-full pl-11 pr-11 py-3 rounded-xl border border-gray-200 focus:border-[#008C45] focus:ring-4 focus:ring-[#008C45]/10 text-gray-800 text-sm transition-all outline-none bg-gray-50/50 hover:bg-white"
                   />
                   <button
@@ -152,6 +157,14 @@ export const LoginCard: React.FC<LoginCardProps> = ({ onLoginSuccess }) => {
                 </div>
               </div>
 
+              {/* Mensagem de Erro de Login */}
+              {error && (
+                <div className="p-3.5 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-semibold flex items-center gap-2">
+                  <AlertCircle className="w-4 h-4 shrink-0 text-red-600" />
+                  <span>{error}</span>
+                </div>
+              )}
+
               {/* Opções extras */}
               <div className="flex items-center justify-between text-xs pt-1">
                 <label className="flex items-center gap-2 cursor-pointer text-gray-600 select-none">
@@ -161,11 +174,8 @@ export const LoginCard: React.FC<LoginCardProps> = ({ onLoginSuccess }) => {
                     onChange={(e) => setRememberMe(e.target.checked)}
                     className="w-4 h-4 rounded text-[#008C45] focus:ring-[#008C45] border-gray-300"
                   />
-                  <span>Manter conectado</span>
+                  <span>Manter conectado neste computador</span>
                 </label>
-                <a href="#forgot" onClick={(e) => { e.preventDefault(); alert('Por favor, solicite a redefinição à administração da CSOAM.'); }} className="text-[#008C45] font-semibold hover:underline">
-                  Esqueci minha senha
-                </a>
               </div>
 
               {/* Botão Entrar */}
@@ -181,33 +191,12 @@ export const LoginCard: React.FC<LoginCardProps> = ({ onLoginSuccess }) => {
                 )}
               </button>
             </form>
-
-            {/* Acesso rápido para testes */}
-            <div className="mt-6 pt-5 border-t border-gray-100">
-              <p className="text-xs text-gray-400 font-medium mb-2.5 text-center">Acesso Rápido da Equipe:</p>
-              <div className="flex gap-2">
-                <button
-                  type="button"
-                  onClick={() => handleQuickDemo('Rosineide Souza', 'TET / Enfermagem')}
-                  className="flex-1 py-2 px-3 rounded-lg border border-emerald-100 bg-emerald-50/50 hover:bg-emerald-50 text-emerald-800 text-xs font-semibold transition-colors text-center"
-                >
-                  👩‍⚕️ Dona Rosineide
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleQuickDemo('Dra. Jessica Yasmin', 'Médica do Trabalho')}
-                  className="flex-1 py-2 px-3 rounded-lg border border-blue-100 bg-blue-50/50 hover:bg-blue-50 text-blue-800 text-xs font-semibold transition-colors text-center"
-                >
-                  🩺 Dra. Jessica
-                </button>
-              </div>
-            </div>
           </div>
 
           {/* Rodapé direito */}
           <div className="mt-8 pt-4 flex items-center justify-center gap-2 text-xs text-gray-400">
             <ShieldCheck className="w-4 h-4 text-emerald-600" />
-            <span>Ambiente interno seguro • CSOAM 2026</span>
+            <span>Ambiente restrito • CSOAM 2026</span>
           </div>
         </div>
 
