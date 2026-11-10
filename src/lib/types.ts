@@ -52,6 +52,7 @@ export interface DailyReport {
   unidade: string;
   responsavel: string;
   turno: string;
+  medicoPlantao?: 'dr_cleverson' | 'dra_jessica' | 'ambos' | string;
   status: 'draft' | 'finalized';
   atendimentos: AtendimentosData;
   enfermagem: EnfermagemData;

@@ -147,7 +147,7 @@ export const DailyForm: React.FC<DailyFormProps> = ({
         </div>
 
         {/* METADADOS: DATA, UNIDADE, RESPONSÁVEL, TURNO */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 mt-6">
           <div>
             <label className="flex items-center gap-1.5 text-xs font-bold text-gray-700 mb-1.5">
               <Calendar className="w-4 h-4 text-emerald-600" />
@@ -179,6 +179,22 @@ export const DailyForm: React.FC<DailyFormProps> = ({
 
           <div>
             <label className="flex items-center gap-1.5 text-xs font-bold text-gray-700 mb-1.5">
+              <Stethoscope className="w-4 h-4 text-emerald-600" />
+              Médico(a) do Plantão *
+            </label>
+            <select
+              value={report.medicoPlantao || 'dr_cleverson'}
+              onChange={(e) => handleMetaChange('medicoPlantao', e.target.value)}
+              className="w-full px-3.5 py-2.5 rounded-xl border border-emerald-300 focus:border-emerald-600 focus:ring-4 focus:ring-emerald-600/10 text-sm font-bold text-emerald-950 bg-emerald-50/60 shadow-2xs"
+            >
+              <option value="dr_cleverson">🩺 Dr. Cleverson Redivo</option>
+              <option value="dra_jessica">🩺 Dra. Jessica Yasmin</option>
+              <option value="ambos">🩺 Ambos (Dr. Cleverson & Dra. Jessica)</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="flex items-center gap-1.5 text-xs font-bold text-gray-700 mb-1.5">
               <User className="w-4 h-4 text-emerald-600" />
               Responsável *
             </label>
@@ -205,6 +221,45 @@ export const DailyForm: React.FC<DailyFormProps> = ({
               <option value="Matutino">Matutino</option>
               <option value="Vespertino">Vespertino</option>
             </select>
+          </div>
+        </div>
+
+        {/* EQUIPE RESPONSÁVEL FIXADA */}
+        <div className="mt-5 pt-4 border-t border-gray-100 flex flex-wrap items-center justify-between gap-3 text-xs bg-gray-50/80 p-3 rounded-2xl border border-gray-200/70">
+          <div className="flex items-center gap-2 font-bold text-gray-700">
+            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
+            <span className="uppercase text-[11px] tracking-wide text-gray-600">Equipe Fixada nos Registros:</span>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-[11px]">
+            <div className="flex items-center gap-1.5 bg-white px-2.5 py-1 rounded-xl border border-emerald-200 shadow-2xs">
+              <span className="text-emerald-700 font-bold">🩺 Med. Ocupacional:</span>
+              <span className="text-gray-900 font-semibold">
+                {report.medicoPlantao === 'dra_jessica' 
+                  ? 'Dra. Jessica Yasmin' 
+                  : report.medicoPlantao === 'ambos' 
+                    ? 'Dr. Cleverson & Dra. Jessica' 
+                    : 'Dr. Cleverson Redivo'}
+              </span>
+            </div>
+
+            <div className="flex items-center gap-1.5 bg-white px-2.5 py-1 rounded-xl border border-gray-200 shadow-2xs">
+              <span className="text-emerald-700 font-bold">👩‍⚕️ Enfermagem:</span>
+              <span className="text-gray-900 font-medium">TET: Rosineide Souza</span>
+              <span className="text-gray-400 text-[10px]">(COREN: 385.633)</span>
+            </div>
+
+            <div className="flex items-center gap-1.5 bg-white px-2.5 py-1 rounded-xl border border-gray-200 shadow-2xs">
+              <span className="text-emerald-700 font-bold">👂 Fonoaudiologia:</span>
+              <span className="text-gray-900 font-medium">Fga. Elise Beatriz</span>
+              <span className="text-gray-400 text-[10px]">(CRFa: 9-2207)</span>
+            </div>
+
+            <div className="flex items-center gap-1.5 bg-white px-2.5 py-1 rounded-xl border border-gray-200 shadow-2xs">
+              <span className="text-emerald-700 font-bold">🔬 Laboratório:</span>
+              <span className="text-gray-900 font-medium">Maria Elcila</span>
+              <span className="text-gray-400 text-[10px]">(CRBM: 8345)</span>
+            </div>
           </div>
         </div>
       </div>

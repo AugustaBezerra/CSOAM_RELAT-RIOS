@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useRef, useState } from 'react';
-import { Download, Image as ImageIcon, ArrowLeft, Printer, CheckCircle, Stethoscope, HeartPulse, Ear } from 'lucide-react';
+import { Download, Image as ImageIcon, ArrowLeft, Printer, CheckCircle, Stethoscope, HeartPulse, Ear, Users } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import { DailyReport } from '@/lib/types';
@@ -58,6 +58,28 @@ export const ReportView: React.FC<ReportViewProps> = ({ report, onBackToEdit }) 
     if (!total || total === 0) return '(0,0%)';
     return `(${((val / total) * 100).toFixed(1).replace('.', ',')}%)`;
   };
+
+  const getMedicoInfo = () => {
+    switch (report.medicoPlantao) {
+      case 'dra_jessica':
+        return {
+          nome: 'Dra. Jessica Yasmin',
+          cargo: 'Médica Examinadora / Coord.'
+        };
+      case 'ambos':
+        return {
+          nome: 'Dr. Cleverson Redivo & Dra. Jessica Yasmin',
+          cargo: 'Médicos Examinadores / Coord.'
+        };
+      case 'dr_cleverson':
+      default:
+        return {
+          nome: 'Dr. Cleverson Redivo',
+          cargo: 'Médico Examinador / Coord.'
+        };
+    }
+  };
+  const medicoInfo = getMedicoInfo();
 
   const formatDateDisplay = (d: string) => {
     if (!d) return '09/11/2026';
@@ -604,42 +626,90 @@ export const ReportView: React.FC<ReportViewProps> = ({ report, onBackToEdit }) 
 
           </div>
 
-          {/* 5. RODAPÉ INSTITUCIONAL (ANÁLISE E ASSINATURAS) */}
-          <div className="border border-emerald-200 rounded-2xl p-2 bg-gradient-to-r from-emerald-50/90 via-white to-emerald-50/90 flex items-center justify-between gap-4 mt-1">
-            <div className="flex items-center gap-3">
-              <div className="px-3 py-1 rounded-full bg-[#006B35] text-white text-[10px] font-black tracking-wide shrink-0">
-                📈 ANÁLISE DO DIA
-              </div>
-              <div className="text-[9px] text-gray-700 space-y-0.5">
-                <div className="flex items-center gap-1">
+          {/* 5. RODAPÉ OFICIAL: ANÁLISE DO DIA & EQUIPE RESPONSÁVEL */}
+          <div className="space-y-1.5 mt-1">
+            {/* Faixa Análise do Dia */}
+            <div className="border border-emerald-200 rounded-xl px-3 py-1 bg-gradient-to-r from-emerald-50/90 via-white to-emerald-50/90 flex items-center justify-between text-[9px] text-gray-700">
+              <div className="flex items-center gap-2">
+                <span className="px-2 py-0.5 rounded-full bg-[#006B35] text-white text-[9px] font-black uppercase tracking-wide">
+                  📈 ANÁLISE DO DIA
+                </span>
+                <span className="flex items-center gap-1 font-medium">
                   <CheckCircle className="w-3 h-3 text-emerald-600 inline" />
-                  <span>Produção dentro da capacidade operacional.</span>
-                </div>
-                <div className="flex items-center gap-1">
+                  Produção dentro da capacidade operacional.
+                </span>
+                <span className="text-gray-300">•</span>
+                <span className="flex items-center gap-1 font-medium">
                   <CheckCircle className="w-3 h-3 text-emerald-600 inline" />
-                  <span>Principais demandas: admissionais e triagens.</span>
-                </div>
+                  Principais demandas: admissionais e triagens.
+                </span>
               </div>
+              <span className="text-emerald-800 font-bold text-[9px]">
+                {report.unidade} • {formatDateDisplay(report.data)} • Turno {report.turno}
+              </span>
             </div>
 
-            {/* Assinaturas */}
-            <div className="flex items-center gap-6 text-[10px]">
-              <div className="flex items-center gap-2">
-                <span className="text-base">👩‍⚕️</span>
-                <div>
-                  <div className="font-bold text-gray-900 leading-tight">TET: Rosineide Souza</div>
-                  <div className="text-[9px] text-gray-500 font-medium">COREN: 385.633</div>
+            {/* TABELA OFICIAL DA EQUIPE RESPONSÁVEL PELOS REGISTROS */}
+            <div className="border border-[#006B35] rounded-xl overflow-hidden bg-white shadow-xs">
+              <div className="grid grid-cols-12 divide-x divide-emerald-200 text-[10px]">
+                
+                {/* Título da Seção */}
+                <div className="col-span-3 bg-[#006B35] text-white p-2 flex items-center justify-center gap-2 text-center">
+                  <Users className="w-4 h-4 text-[#8BCF27] shrink-0" />
+                  <div className="font-black tracking-tight text-[9px] leading-tight uppercase">
+                    <span>EQUIPE RESPONSÁVEL</span><br />
+                    <span className="text-[#8BCF27]">PELOS REGISTROS</span>
+                  </div>
                 </div>
-              </div>
 
-              <div className="h-6 w-px bg-gray-300" />
-
-              <div className="flex items-center gap-2">
-                <span className="text-base">🩺</span>
-                <div>
-                  <div className="font-bold text-gray-900 leading-tight">Dra. Jessica Yasmin</div>
-                  <div className="text-[9px] text-gray-500 font-medium">Medicina Ocupacional</div>
+                {/* Coluna 1: Medicina Ocupacional */}
+                <div className="col-span-3 flex flex-col justify-between">
+                  <div className="bg-emerald-50/80 text-[#006B35] font-bold text-center py-0.5 border-b border-emerald-200 text-[9px] flex items-center justify-center gap-1">
+                    <Stethoscope className="w-3 h-3 text-emerald-700" />
+                    <span>Medicina Ocupacional</span>
+                  </div>
+                  <div className="p-1.5 text-center flex-1 flex flex-col justify-center">
+                    <div className="font-black text-gray-900 leading-tight text-[10px]">{medicoInfo.nome}</div>
+                    <div className="text-[8px] text-gray-500 font-medium">{medicoInfo.cargo}</div>
+                  </div>
                 </div>
+
+                {/* Coluna 2: Enfermagem */}
+                <div className="col-span-2 flex flex-col justify-between">
+                  <div className="bg-emerald-50/80 text-[#006B35] font-bold text-center py-0.5 border-b border-emerald-200 text-[9px] flex items-center justify-center gap-1">
+                    <HeartPulse className="w-3 h-3 text-emerald-700" />
+                    <span>Enfermagem</span>
+                  </div>
+                  <div className="p-1.5 text-center flex-1 flex flex-col justify-center">
+                    <div className="font-black text-gray-900 leading-tight text-[10px]">TET: Rosineide Souza</div>
+                    <div className="text-[8px] text-gray-500 font-medium">COREN: 385.633</div>
+                  </div>
+                </div>
+
+                {/* Coluna 3: Fonoaudiologia */}
+                <div className="col-span-2 flex flex-col justify-between">
+                  <div className="bg-emerald-50/80 text-[#006B35] font-bold text-center py-0.5 border-b border-emerald-200 text-[9px] flex items-center justify-center gap-1">
+                    <Ear className="w-3 h-3 text-emerald-700" />
+                    <span>Fonoaudiologia</span>
+                  </div>
+                  <div className="p-1.5 text-center flex-1 flex flex-col justify-center">
+                    <div className="font-black text-gray-900 leading-tight text-[10px]">Fga. Elise Beatriz</div>
+                    <div className="text-[8px] text-gray-500 font-medium">CRFa: 9-2207</div>
+                  </div>
+                </div>
+
+                {/* Coluna 4: Laboratório (Biomédica) */}
+                <div className="col-span-2 flex flex-col justify-between">
+                  <div className="bg-emerald-50/80 text-[#006B35] font-bold text-center py-0.5 border-b border-emerald-200 text-[9px] flex items-center justify-center gap-1">
+                    <span className="text-[9px]">🔬</span>
+                    <span>Laboratório (Biomédica)</span>
+                  </div>
+                  <div className="p-1.5 text-center flex-1 flex flex-col justify-center">
+                    <div className="font-black text-gray-900 leading-tight text-[10px]">Maria Elcila</div>
+                    <div className="text-[8px] text-gray-500 font-medium">CRBM: 8345</div>
+                  </div>
+                </div>
+
               </div>
             </div>
           </div>

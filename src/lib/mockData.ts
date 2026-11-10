@@ -5,6 +5,7 @@ export const initialReportData: DailyReport = {
   unidade: 'CSOAM – Matriz',
   responsavel: 'Rosineide Souza',
   turno: 'Integral',
+  medicoPlantao: 'dr_cleverson',
   status: 'finalized',
   atendimentos: {
     admissional: 31,
