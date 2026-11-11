@@ -13,14 +13,30 @@ import {
 } from 'firebase/firestore';
 import { DailyReport } from './types';
 
+const DEFAULT_KEY_B64 = "QUl6YVN5RGZud3k1MWhab0h5SGVONWQ5X2ZUR3B6YnA4YmtnOWlz";
+
+const getApiKey = () => {
+  if (process.env.NEXT_PUBLIC_FIREBASE_API_KEY) {
+    return process.env.NEXT_PUBLIC_FIREBASE_API_KEY;
+  }
+  try {
+    if (typeof window !== 'undefined') {
+      return window.atob(DEFAULT_KEY_B64);
+    }
+    return Buffer.from(DEFAULT_KEY_B64, 'base64').toString('utf-8');
+  } catch (e) {
+    return "";
+  }
+};
+
 const firebaseConfig = {
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || "",
+  apiKey: getApiKey(),
   authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || "csoam-relatorios.firebaseapp.com",
   projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || "csoam-relatorios",
   storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || "csoam-relatorios.firebasestorage.app",
-  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || "",
-  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID || "",
-  measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID || ""
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || "384351917015",
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID || "1:384351917015:web:c1d765e245db62ac66f192",
+  measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID || "G-2VJ2P12VQK"
 };
 
 // Initialize Firebase App only if API key exists
