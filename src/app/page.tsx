@@ -8,7 +8,8 @@ import { ReportView } from '@/components/ReportView/ReportView';
 import { HistoryView } from '@/components/History/HistoryView';
 import { DailyReport } from '@/lib/types';
 import { initialReportData, getEmptyDailyReport } from '@/lib/mockData';
-import { saveReportToFirebase, getReportsFromFirebase } from '@/lib/firebase';
+import { saveReportToFirebase, getReportsFromFirebase, auth } from '@/lib/firebase';
+import { signOut, onAuthStateChanged } from 'firebase/auth';
 import { CheckCircle2, AlertCircle } from 'lucide-react';
 
 export default function Home() {
@@ -21,7 +22,7 @@ export default function Home() {
   const [saving, setSaving] = useState(false);
   const [toastMessage, setToastMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
 
-  // Check login in localStorage
+  // Check login in Firebase & localStorage
   useEffect(() => {
     try {
       const savedUser = localStorage.getItem('csoam_active_user');
@@ -30,6 +31,23 @@ export default function Home() {
       }
     } catch (e) {
       console.warn("User load error:", e);
+    }
+
+    if (auth) {
+      const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+        if (firebaseUser) {
+          const userData = {
+            name: firebaseUser.displayName || 'Equipe CSOAM',
+            role: 'Operacional / Enfermagem',
+            email: firebaseUser.email || ''
+          };
+          setUser(userData);
+          try {
+            localStorage.setItem('csoam_active_user', JSON.stringify(userData));
+          } catch (e) {}
+        }
+      });
+      return () => unsubscribe();
     }
   }, []);
 
@@ -55,7 +73,14 @@ export default function Home() {
     } catch (e) {}
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    if (auth) {
+      try {
+        await signOut(auth);
+      } catch (e) {
+        console.warn("SignOut error:", e);
+      }
+    }
     setUser(null);
     try {
       localStorage.removeItem('csoam_active_user');

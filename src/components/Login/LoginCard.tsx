@@ -3,6 +3,8 @@
 import React, { useState } from 'react';
 import { User, Lock, Eye, EyeOff, ShieldCheck, HeartPulse, HardHat, AlertCircle } from 'lucide-react';
 import { basePath } from '@/lib/constants';
+import { auth } from '@/lib/firebase';
+import { signInWithEmailAndPassword } from 'firebase/auth';
 
 interface LoginCardProps {
   onLoginSuccess: (user: { name: string; role: string; email: string }) => void;
@@ -16,30 +18,59 @@ export const LoginCard: React.FC<LoginCardProps> = ({ onLoginSuccess }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     setLoading(true);
 
-    const cleanEmail = email.trim().toLowerCase();
+    const cleanInput = email.trim();
     const cleanPass = password.trim();
 
-    // Credenciais autorizadas para a equipe
-    const validEmails = ['servico@csoam.com.br', 'servico@cosam.com.br', 'servico'];
-    const validPasswords = ['csoam2026', 'Csoam@2026', 'csoam@2026', 'Csoam2026'];
-
-    setTimeout(() => {
-      if (validEmails.includes(cleanEmail) && validPasswords.includes(cleanPass)) {
-        onLoginSuccess({
-          name: 'Equipe de Atendimento',
-          role: 'Operacional / Enfermagem',
-          email: 'servico@csoam.com.br'
-        });
-      } else {
-        setError('E-mail ou senha incorretos. Acesso restrito aos colaboradores da CSOAM.');
-      }
+    if (!cleanInput || !cleanPass) {
+      setError('Por favor, informe seu usuário/e-mail e senha.');
       setLoading(false);
-    }, 400);
+      return;
+    }
+
+    // Se o usuário digitou apenas o login sem domínio, completa com @csoam.com.br
+    const finalEmail = cleanInput.includes('@')
+      ? cleanInput.toLowerCase()
+      : `${cleanInput.toLowerCase()}@csoam.com.br`;
+
+    try {
+      if (!auth) {
+        throw new Error('Serviço de autenticação não configurado.');
+      }
+
+      const userCredential = await signInWithEmailAndPassword(auth, finalEmail, cleanPass);
+      const firebaseUser = userCredential.user;
+
+      onLoginSuccess({
+        name: firebaseUser.displayName || 'Equipe CSOAM',
+        role: 'Equipe de Atendimento',
+        email: firebaseUser.email || finalEmail,
+      });
+    } catch (err: any) {
+      console.error('Erro de autenticação no Firebase:', err);
+      const code = err?.code;
+      if (
+        code === 'auth/invalid-credential' ||
+        code === 'auth/wrong-password' ||
+        code === 'auth/user-not-found'
+      ) {
+        setError('E-mail ou senha incorretos. Acesso restrito aos colaboradores da CSOAM.');
+      } else if (code === 'auth/too-many-requests') {
+        setError('Muitas tentativas sem sucesso. Aguarde alguns instantes e tente novamente.');
+      } else if (code === 'auth/invalid-email') {
+        setError('Formato de e-mail inválido.');
+      } else if (code === 'auth/network-request-failed') {
+        setError('Falha de conexão com a internet. Verifique sua rede.');
+      } else {
+        setError('Não foi possível realizar o login. Verifique suas credenciais.');
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -125,7 +156,7 @@ export const LoginCard: React.FC<LoginCardProps> = ({ onLoginSuccess }) => {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
-                    placeholder="servico@csoam.com.br"
+                    placeholder="Digite seu usuário ou e-mail"
                     className="w-full pl-11 pr-4 py-3 rounded-xl border border-gray-200 focus:border-[#008C45] focus:ring-4 focus:ring-[#008C45]/10 text-gray-800 text-sm transition-all outline-none bg-gray-50/50 hover:bg-white"
                   />
                 </div>
@@ -145,7 +176,7 @@ export const LoginCard: React.FC<LoginCardProps> = ({ onLoginSuccess }) => {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
-                    placeholder="Digite a senha da equipe"
+                    placeholder="Digite sua senha"
                     className="w-full pl-11 pr-11 py-3 rounded-xl border border-gray-200 focus:border-[#008C45] focus:ring-4 focus:ring-[#008C45]/10 text-gray-800 text-sm transition-all outline-none bg-gray-50/50 hover:bg-white"
                   />
                   <button
