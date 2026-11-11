@@ -83,6 +83,9 @@ export const HistoryView: React.FC<HistoryViewProps> = ({
                     (Number(rep.atendimentos.periodico) || 0) +
                     (Number(rep.atendimentos.demissional) || 0) +
                     (Number(rep.atendimentos.mudancaRisco) || 0) +
+                    (Number(rep.atendimentos.consulta) || 0) +
+                    (Number(rep.atendimentos.retorno) || 0) +
+                    (Number(rep.atendimentos.pcd) || 0) +
                     (Number(rep.atendimentos.consultas) || 0);
 
                   const totalEnf = 
@@ -98,7 +101,10 @@ export const HistoryView: React.FC<HistoryViewProps> = ({
                   const totalAudio = 
                     (Number(rep.audiometria.admissional) || 0) +
                     (Number(rep.audiometria.periodico) || 0) +
-                    (Number(rep.audiometria.demissional) || 0);
+                    (Number(rep.audiometria.demissional) || 0) +
+                    (Number(rep.audiometria.mudancaRisco) || 0) +
+                    (Number(rep.audiometria.terceiro) || 0) +
+                    (Number(rep.audiometria.terceirosPcd) || 0);
 
                   const totalEx = 
                     (Number(rep.exames.sangue) || 0) +

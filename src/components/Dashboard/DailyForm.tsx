@@ -33,6 +33,9 @@ export const DailyForm: React.FC<DailyFormProps> = ({
     (Number(report.atendimentos.periodico) || 0) +
     (Number(report.atendimentos.demissional) || 0) +
     (Number(report.atendimentos.mudancaRisco) || 0) +
+    (Number(report.atendimentos.consulta) || 0) +
+    (Number(report.atendimentos.retorno) || 0) +
+    (Number(report.atendimentos.pcd) || 0) +
     (Number(report.atendimentos.consultas) || 0);
 
   const totalEnfermagem = 
@@ -48,7 +51,10 @@ export const DailyForm: React.FC<DailyFormProps> = ({
   const totalAudiometria = 
     (Number(report.audiometria.admissional) || 0) +
     (Number(report.audiometria.periodico) || 0) +
-    (Number(report.audiometria.demissional) || 0);
+    (Number(report.audiometria.demissional) || 0) +
+    (Number(report.audiometria.mudancaRisco) || 0) +
+    (Number(report.audiometria.terceiro) || 0) +
+    (Number(report.audiometria.terceirosPcd) || 0);
 
   const totalColetas = 
     (Number(report.coletas.ocupacional) || 0) +
@@ -289,7 +295,7 @@ export const DailyForm: React.FC<DailyFormProps> = ({
 
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3.5 mt-5">
               <div>
-                <label className="block text-xs font-semibold text-gray-700 mb-1">Admissional</label>
+                <label className="block text-xs font-semibold text-gray-700 mb-1 leading-tight">Admissional</label>
                 <input
                   type="number"
                   min="0"
@@ -300,7 +306,7 @@ export const DailyForm: React.FC<DailyFormProps> = ({
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-gray-700 mb-1">Periódico</label>
+                <label className="block text-xs font-semibold text-gray-700 mb-1 leading-tight">Periódico</label>
                 <input
                   type="number"
                   min="0"
@@ -311,7 +317,7 @@ export const DailyForm: React.FC<DailyFormProps> = ({
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-gray-700 mb-1">Demissional</label>
+                <label className="block text-xs font-semibold text-gray-700 mb-1 leading-tight">Demissional</label>
                 <input
                   type="number"
                   min="0"
@@ -322,7 +328,9 @@ export const DailyForm: React.FC<DailyFormProps> = ({
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-gray-700 mb-1">Mudança de Risco</label>
+                <label className="block text-xs font-semibold text-gray-700 mb-1 leading-tight" title="Mudanças dos Riscos Ocupacionais">
+                  Mudanças dos Riscos Ocupacionais
+                </label>
                 <input
                   type="number"
                   min="0"
@@ -332,13 +340,35 @@ export const DailyForm: React.FC<DailyFormProps> = ({
                 />
               </div>
 
-              <div className="col-span-2 sm:col-span-2">
-                <label className="block text-xs font-semibold text-gray-700 mb-1">Consultas / Retornos / Outros</label>
+              <div>
+                <label className="block text-xs font-semibold text-gray-700 mb-1 leading-tight">Consulta</label>
                 <input
                   type="number"
                   min="0"
-                  value={report.atendimentos.consultas}
-                  onChange={(e) => handleFieldChange('atendimentos', 'consultas', e.target.value)}
+                  value={report.atendimentos.consulta}
+                  onChange={(e) => handleFieldChange('atendimentos', 'consulta', e.target.value)}
+                  className="w-full px-3 py-2 rounded-xl border border-gray-200 text-center font-bold text-gray-900 text-base focus:border-emerald-600 focus:ring-2 focus:ring-emerald-600/10 bg-gray-50"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-gray-700 mb-1 leading-tight">Retorno</label>
+                <input
+                  type="number"
+                  min="0"
+                  value={report.atendimentos.retorno}
+                  onChange={(e) => handleFieldChange('atendimentos', 'retorno', e.target.value)}
+                  className="w-full px-3 py-2 rounded-xl border border-gray-200 text-center font-bold text-gray-900 text-base focus:border-emerald-600 focus:ring-2 focus:ring-emerald-600/10 bg-gray-50"
+                />
+              </div>
+
+              <div className="col-span-2 sm:col-span-1">
+                <label className="block text-xs font-semibold text-gray-700 mb-1 leading-tight">PCD</label>
+                <input
+                  type="number"
+                  min="0"
+                  value={report.atendimentos.pcd}
+                  onChange={(e) => handleFieldChange('atendimentos', 'pcd', e.target.value)}
                   className="w-full px-3 py-2 rounded-xl border border-gray-200 text-center font-bold text-gray-900 text-base focus:border-emerald-600 focus:ring-2 focus:ring-emerald-600/10 bg-gray-50"
                 />
               </div>
@@ -498,9 +528,9 @@ export const DailyForm: React.FC<DailyFormProps> = ({
               <Ear className="w-5 h-5 text-blue-600" />
             </div>
 
-            <div className="grid grid-cols-3 gap-4 mt-5">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3.5 mt-5">
               <div>
-                <label className="block text-xs font-semibold text-gray-700 mb-1">Admissional</label>
+                <label className="block text-xs font-semibold text-gray-700 mb-1 leading-tight">Admissional</label>
                 <input
                   type="number"
                   min="0"
@@ -511,7 +541,7 @@ export const DailyForm: React.FC<DailyFormProps> = ({
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-gray-700 mb-1">Periódico</label>
+                <label className="block text-xs font-semibold text-gray-700 mb-1 leading-tight">Periódico</label>
                 <input
                   type="number"
                   min="0"
@@ -522,12 +552,47 @@ export const DailyForm: React.FC<DailyFormProps> = ({
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-gray-700 mb-1">Demissional</label>
+                <label className="block text-xs font-semibold text-gray-700 mb-1 leading-tight">Demissional</label>
                 <input
                   type="number"
                   min="0"
                   value={report.audiometria.demissional}
                   onChange={(e) => handleFieldChange('audiometria', 'demissional', e.target.value)}
+                  className="w-full px-3 py-2 rounded-xl border border-gray-200 text-center font-bold text-gray-900 text-base focus:border-blue-600 focus:ring-2 focus:ring-blue-600/10 bg-gray-50"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-gray-700 mb-1 leading-tight" title="Mudanças de Riscos Ocupacionais">
+                  Mudanças de Riscos Ocupacionais
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  value={report.audiometria.mudancaRisco}
+                  onChange={(e) => handleFieldChange('audiometria', 'mudancaRisco', e.target.value)}
+                  className="w-full px-3 py-2 rounded-xl border border-gray-200 text-center font-bold text-gray-900 text-base focus:border-blue-600 focus:ring-2 focus:ring-blue-600/10 bg-gray-50"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-gray-700 mb-1 leading-tight">Terceiro</label>
+                <input
+                  type="number"
+                  min="0"
+                  value={report.audiometria.terceiro}
+                  onChange={(e) => handleFieldChange('audiometria', 'terceiro', e.target.value)}
+                  className="w-full px-3 py-2 rounded-xl border border-gray-200 text-center font-bold text-gray-900 text-base focus:border-blue-600 focus:ring-2 focus:ring-blue-600/10 bg-gray-50"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-gray-700 mb-1 leading-tight">Terceiros PCD</label>
+                <input
+                  type="number"
+                  min="0"
+                  value={report.audiometria.terceirosPcd}
+                  onChange={(e) => handleFieldChange('audiometria', 'terceirosPcd', e.target.value)}
                   className="w-full px-3 py-2 rounded-xl border border-gray-200 text-center font-bold text-gray-900 text-base focus:border-blue-600 focus:ring-2 focus:ring-blue-600/10 bg-gray-50"
                 />
               </div>

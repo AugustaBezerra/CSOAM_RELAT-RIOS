@@ -31,6 +31,9 @@ export const getEmptyDailyReport = (): DailyReport => {
       periodico: 0,
       demissional: 0,
       mudancaRisco: 0,
+      consulta: 0,
+      retorno: 0,
+      pcd: 0,
       consultas: 0,
     },
     enfermagem: {
@@ -47,6 +50,9 @@ export const getEmptyDailyReport = (): DailyReport => {
       admissional: 0,
       periodico: 0,
       demissional: 0,
+      mudancaRisco: 0,
+      terceiro: 0,
+      terceirosPcd: 0,
     },
     coletas: {
       ocupacional: 0,
@@ -84,6 +90,9 @@ export const initialReportData: DailyReport = {
     periodico: 6,
     demissional: 6,
     mudancaRisco: 1,
+    consulta: 0,
+    retorno: 0,
+    pcd: 0,
     consultas: 0,
   },
   enfermagem: {
@@ -100,6 +109,9 @@ export const initialReportData: DailyReport = {
     admissional: 9,
     periodico: 3,
     demissional: 1,
+    mudancaRisco: 0,
+    terceiro: 0,
+    terceirosPcd: 0,
   },
   coletas: {
     ocupacional: 22,

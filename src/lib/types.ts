@@ -3,7 +3,10 @@ export interface AtendimentosData {
   periodico: number;
   demissional: number;
   mudancaRisco: number;
-  consultas: number;
+  consulta: number;
+  retorno: number;
+  pcd: number;
+  consultas?: number;
 }
 
 export interface EnfermagemData {
@@ -21,6 +24,9 @@ export interface AudiometriaData {
   admissional: number;
   periodico: number;
   demissional: number;
+  mudancaRisco: number;
+  terceiro: number;
+  terceirosPcd: number;
 }
 
 export interface ColetasData {
