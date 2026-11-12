@@ -105,11 +105,9 @@ export const ReportView: React.FC<ReportViewProps> = ({ report, onBackToEdit }) 
       const canvas = await html2canvas(element, {
         scale: 2,
         useCORS: true,
+        allowTaint: true,
         logging: false,
-        backgroundColor: '#ffffff',
-        windowWidth: 1200,
-        scrollX: 0,
-        scrollY: 0,
+        backgroundColor: '#ffffff'
       });
       const imgData = canvas.toDataURL('image/png');
       const pdf = new jsPDF({
@@ -137,11 +135,9 @@ export const ReportView: React.FC<ReportViewProps> = ({ report, onBackToEdit }) 
       const canvas = await html2canvas(element, {
         scale: 2,
         useCORS: true,
+        allowTaint: true,
         logging: false,
-        backgroundColor: '#ffffff',
-        windowWidth: 1200,
-        scrollX: 0,
-        scrollY: 0,
+        backgroundColor: '#ffffff'
       });
       const link = document.createElement('a');
       link.download = `Relatorio_CSOAM_${report.data.replace(/[/\\-]/g, '_')}.png`;
@@ -176,36 +172,110 @@ export const ReportView: React.FC<ReportViewProps> = ({ report, onBackToEdit }) 
     { label: 'Terceiros PCD', value: Number(report.audiometria.terceirosPcd) || 0, color: '#D97706' },
   ];
 
+  // Helper para desenhar fatias de rosca em SVG com trigonometria precisa (360 graus completos)
+  const polarToCartesian = (cx: number, cy: number, r: number, angleInDegrees: number) => {
+    const angleInRadians = ((angleInDegrees - 90) * Math.PI) / 180.0;
+    return {
+      x: Number((cx + r * Math.cos(angleInRadians)).toFixed(3)),
+      y: Number((cy + r * Math.sin(angleInRadians)).toFixed(3)),
+    };
+  };
+
+  const describeArc = (cx: number, cy: number, r: number, startAngle: number, endAngle: number) => {
+    const start = polarToCartesian(cx, cy, r, startAngle);
+    const end = polarToCartesian(cx, cy, r, endAngle);
+    const largeArcFlag = endAngle - startAngle <= 180 ? '0' : '1';
+    return `M ${start.x} ${start.y} A ${r} ${r} 0 ${largeArcFlag} 1 ${end.x} ${end.y}`;
+  };
+
   const renderDonutSlices = (slices: { color: string; value: number }[], total: number) => {
-    if (!total || total === 0) {
+    const radius = 13;
+    const center = 18;
+    const strokeWidth = 4.5;
+
+    if (!total || total <= 0) {
       return (
-        <path
-          className="text-gray-100"
-          strokeWidth="5"
-          stroke="currentColor"
+        <circle
+          cx={center}
+          cy={center}
+          r={radius}
+          stroke="#E5E7EB"
+          strokeWidth={strokeWidth}
           fill="none"
-          d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
         />
       );
     }
-    let accumulated = 0;
-    return slices.map((slice, idx) => {
-      if (!slice.value || slice.value <= 0) return null;
-      const pct = (slice.value / total) * 100;
-      const offset = accumulated;
-      accumulated += pct;
+
+    const validSlices = slices.filter(s => s.value > 0);
+
+    if (validSlices.length === 0) {
       return (
-        <path
-          key={idx}
-          stroke={slice.color}
-          strokeWidth="5"
-          strokeDasharray={`${pct} ${100 - pct}`}
-          strokeDashoffset={-offset}
+        <circle
+          cx={center}
+          cy={center}
+          r={radius}
+          stroke="#E5E7EB"
+          strokeWidth={strokeWidth}
           fill="none"
-          d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
         />
       );
-    });
+    }
+
+    if (validSlices.length === 1) {
+      return (
+        <g>
+          <circle
+            cx={center}
+            cy={center}
+            r={radius}
+            stroke="#F3F4F6"
+            strokeWidth={strokeWidth}
+            fill="none"
+          />
+          <circle
+            cx={center}
+            cy={center}
+            r={radius}
+            stroke={validSlices[0].color}
+            strokeWidth={strokeWidth}
+            fill="none"
+          />
+        </g>
+      );
+    }
+
+    let currentAngle = 0;
+    return (
+      <g>
+        {/* Anel de fundo cinza bem claro */}
+        <circle
+          cx={center}
+          cy={center}
+          r={radius}
+          stroke="#F3F4F6"
+          strokeWidth={strokeWidth}
+          fill="none"
+        />
+        {validSlices.map((slice, idx) => {
+          const angleDelta = (slice.value / total) * 360;
+          const startAngle = currentAngle;
+          const endAngle = currentAngle + angleDelta;
+          currentAngle = endAngle;
+
+          const pathD = describeArc(center, center, radius, startAngle, endAngle);
+          return (
+            <path
+              key={idx}
+              d={pathD}
+              stroke={slice.color}
+              strokeWidth={strokeWidth}
+              fill="none"
+              strokeLinecap="butt"
+            />
+          );
+        })}
+      </g>
+    );
   };
 
   // Divisão das empresas em 2 colunas
@@ -230,7 +300,7 @@ export const ReportView: React.FC<ReportViewProps> = ({ report, onBackToEdit }) 
     <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 font-sans">
       
       {/* BARRA SUPERIOR DE AÇÕES */}
-      <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-200 mb-6 flex flex-wrap items-center justify-between gap-4">
+      <div className="no-print bg-white rounded-2xl p-4 shadow-sm border border-gray-200 mb-6 flex flex-wrap items-center justify-between gap-4">
         <button
           onClick={onBackToEdit}
           className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-gray-200 text-gray-700 text-xs font-bold hover:bg-gray-50 transition-colors"
@@ -240,6 +310,15 @@ export const ReportView: React.FC<ReportViewProps> = ({ report, onBackToEdit }) 
         </button>
 
         <div className="flex items-center gap-3">
+          <button
+            onClick={() => window.print()}
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-gray-200 text-gray-700 text-xs font-bold hover:bg-gray-50 transition-colors"
+            title="Imprimir diretamente em A4 Paisagem"
+          >
+            <Printer className="w-4 h-4 text-emerald-700" />
+            <span>Imprimir (A4)</span>
+          </button>
+
           <button
             onClick={handleDownloadPNG}
             disabled={downloading}
@@ -264,6 +343,7 @@ export const ReportView: React.FC<ReportViewProps> = ({ report, onBackToEdit }) 
       <div className="overflow-x-auto pb-8 flex justify-center">
         <div 
           ref={printRef}
+          id="csoam-print-area"
           style={{ 
             width: '1060px', 
             minHeight: '745px',
@@ -400,19 +480,12 @@ export const ReportView: React.FC<ReportViewProps> = ({ report, onBackToEdit }) 
                 <div className="flex items-center gap-2 mt-2">
                   {/* Gráfico Donut SVG */}
                   <div className="relative w-24 h-24 flex items-center justify-center shrink-0">
-                    <svg className="w-24 h-24 transform -rotate-90" viewBox="0 0 36 36">
-                      <path
-                        className="text-gray-100"
-                        strokeWidth="5"
-                        stroke="currentColor"
-                        fill="none"
-                        d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                      />
+                    <svg className="w-24 h-24" viewBox="0 0 36 36">
                       {renderDonutSlices(atendimentosSlices, totalAtendimentos)}
                     </svg>
-                    <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-                      <span className="text-base font-black text-gray-900 leading-none">{totalAtendimentos}</span>
-                      <span className="text-[9px] font-bold text-gray-500">Total</span>
+                    <div className="absolute inset-0 flex flex-col items-center justify-center text-center pointer-events-none">
+                      <span className="text-sm font-black text-gray-900 leading-none">{totalAtendimentos}</span>
+                      <span className="text-[8px] font-bold text-gray-500 uppercase tracking-tighter mt-0.5">Total</span>
                     </div>
                   </div>
 
@@ -555,19 +628,12 @@ export const ReportView: React.FC<ReportViewProps> = ({ report, onBackToEdit }) 
                 <div className="flex items-center gap-2 mt-2">
                   {/* Gráfico Donut SVG */}
                   <div className="relative w-24 h-24 flex items-center justify-center shrink-0">
-                    <svg className="w-24 h-24 transform -rotate-90" viewBox="0 0 36 36">
-                      <path
-                        className="text-gray-100"
-                        strokeWidth="5"
-                        stroke="currentColor"
-                        fill="none"
-                        d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                      />
+                    <svg className="w-24 h-24" viewBox="0 0 36 36">
                       {renderDonutSlices(audiometriaSlices, totalAudiometria)}
                     </svg>
-                    <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-                      <span className="text-base font-black text-gray-900 leading-none">{totalAudiometria}</span>
-                      <span className="text-[9px] font-bold text-gray-500">Total</span>
+                    <div className="absolute inset-0 flex flex-col items-center justify-center text-center pointer-events-none">
+                      <span className="text-sm font-black text-gray-900 leading-none">{totalAudiometria}</span>
+                      <span className="text-[8px] font-bold text-gray-500 uppercase tracking-tighter mt-0.5">Total</span>
                     </div>
                   </div>
 
