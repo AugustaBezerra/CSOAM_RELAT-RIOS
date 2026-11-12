@@ -106,7 +106,10 @@ export const ReportView: React.FC<ReportViewProps> = ({ report, onBackToEdit }) 
         scale: 2,
         useCORS: true,
         logging: false,
-        backgroundColor: '#ffffff'
+        backgroundColor: '#ffffff',
+        windowWidth: 1200,
+        scrollX: 0,
+        scrollY: 0,
       });
       const imgData = canvas.toDataURL('image/png');
       const pdf = new jsPDF({
@@ -135,7 +138,10 @@ export const ReportView: React.FC<ReportViewProps> = ({ report, onBackToEdit }) 
         scale: 2,
         useCORS: true,
         logging: false,
-        backgroundColor: '#ffffff'
+        backgroundColor: '#ffffff',
+        windowWidth: 1200,
+        scrollX: 0,
+        scrollY: 0,
       });
       const link = document.createElement('a');
       link.download = `Relatorio_CSOAM_${report.data.replace(/[/\\-]/g, '_')}.png`;
@@ -147,6 +153,59 @@ export const ReportView: React.FC<ReportViewProps> = ({ report, onBackToEdit }) 
     } finally {
       setDownloading(false);
     }
+  };
+
+  // Fatias coloridas do gráfico de rosca de Atendimentos
+  const atendimentosSlices = [
+    { label: 'Admissional', value: Number(report.atendimentos.admissional) || 0, color: '#2563EB' },
+    { label: 'Periódico', value: Number(report.atendimentos.periodico) || 0, color: '#16A34A' },
+    { label: 'Demissional', value: Number(report.atendimentos.demissional) || 0, color: '#EA580C' },
+    { label: 'Mud. Riscos Ocup.', value: Number(report.atendimentos.mudancaRisco) || 0, color: '#9333EA' },
+    { label: 'Consulta', value: Number(report.atendimentos.consulta ?? report.atendimentos.consultas) || 0, color: '#0891B2' },
+    { label: 'Retorno', value: Number(report.atendimentos.retorno) || 0, color: '#4F46E5' },
+    { label: 'PCD', value: Number(report.atendimentos.pcd) || 0, color: '#D97706' },
+  ];
+
+  // Fatias coloridas do gráfico de rosca de Audiometria
+  const audiometriaSlices = [
+    { label: 'Admissional', value: Number(report.audiometria.admissional) || 0, color: '#2563EB' },
+    { label: 'Periódico', value: Number(report.audiometria.periodico) || 0, color: '#16A34A' },
+    { label: 'Demissional', value: Number(report.audiometria.demissional) || 0, color: '#EA580C' },
+    { label: 'Mud. Riscos Ocup.', value: Number(report.audiometria.mudancaRisco) || 0, color: '#9333EA' },
+    { label: 'Terceiro', value: Number(report.audiometria.terceiro) || 0, color: '#0D9488' },
+    { label: 'Terceiros PCD', value: Number(report.audiometria.terceirosPcd) || 0, color: '#D97706' },
+  ];
+
+  const renderDonutSlices = (slices: { color: string; value: number }[], total: number) => {
+    if (!total || total === 0) {
+      return (
+        <path
+          className="text-gray-100"
+          strokeWidth="5"
+          stroke="currentColor"
+          fill="none"
+          d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+        />
+      );
+    }
+    let accumulated = 0;
+    return slices.map((slice, idx) => {
+      if (!slice.value || slice.value <= 0) return null;
+      const pct = (slice.value / total) * 100;
+      const offset = accumulated;
+      accumulated += pct;
+      return (
+        <path
+          key={idx}
+          stroke={slice.color}
+          strokeWidth="5"
+          strokeDasharray={`${pct} ${100 - pct}`}
+          strokeDashoffset={-offset}
+          fill="none"
+          d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+        />
+      );
+    });
   };
 
   // Divisão das empresas em 2 colunas
@@ -205,8 +264,12 @@ export const ReportView: React.FC<ReportViewProps> = ({ report, onBackToEdit }) 
       <div className="overflow-x-auto pb-8 flex justify-center">
         <div 
           ref={printRef}
-          style={{ width: '1060px', minHeight: '745px' }}
-          className="bg-white text-gray-900 p-6 shadow-2xl border border-gray-200 select-none flex flex-col justify-between"
+          style={{ 
+            width: '1060px', 
+            minHeight: '745px',
+            fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'
+          }}
+          className="bg-white text-gray-900 p-6 shadow-2xl border border-gray-200 select-none flex flex-col justify-between leading-normal"
         >
           
           {/* 1. CABEÇALHO COMPLETO INSTITUCIONAL */}
@@ -266,57 +329,57 @@ export const ReportView: React.FC<ReportViewProps> = ({ report, onBackToEdit }) 
             {/* 2. 5 CARTÕES KPI DO TOPO */}
             <div className="grid grid-cols-5 gap-3 mt-3">
               {/* Card 1 */}
-              <div className="bg-white border-2 border-emerald-500 rounded-2xl p-2.5 flex items-center gap-3 shadow-sm">
+              <div className="bg-white border-2 border-emerald-500 rounded-2xl p-2.5 flex items-center gap-2.5 shadow-sm">
                 <div className="w-10 h-10 rounded-full bg-emerald-700 text-white flex items-center justify-center text-lg font-bold shrink-0 shadow">
                   👥
                 </div>
-                <div className="min-w-0">
-                  <div className="text-2xl font-black text-[#0B3C2A] leading-none">{totalAtendimentos}</div>
-                  <div className="text-[10px] font-bold text-gray-700 mt-1 leading-tight truncate">Atendimentos Ocupacionais</div>
+                <div className="min-w-0 flex-1">
+                  <div className="text-2xl font-black text-[#0B3C2A] leading-tight">{totalAtendimentos}</div>
+                  <div className="text-[10px] font-bold text-gray-700 mt-0.5 leading-normal whitespace-nowrap overflow-visible">Atendimentos Ocupacionais</div>
                 </div>
               </div>
 
               {/* Card 2 */}
-              <div className="bg-white border-2 border-emerald-500 rounded-2xl p-2.5 flex items-center gap-3 shadow-sm">
+              <div className="bg-white border-2 border-emerald-500 rounded-2xl p-2.5 flex items-center gap-2.5 shadow-sm">
                 <div className="w-10 h-10 rounded-full bg-emerald-700 text-white flex items-center justify-center text-lg font-bold shrink-0 shadow">
                   🩺
                 </div>
-                <div className="min-w-0">
-                  <div className="text-2xl font-black text-[#0B3C2A] leading-none">{totalEnfermagem}</div>
-                  <div className="text-[10px] font-bold text-gray-700 mt-1 leading-tight truncate">Serviços de Enfermagem</div>
+                <div className="min-w-0 flex-1">
+                  <div className="text-2xl font-black text-[#0B3C2A] leading-tight">{totalEnfermagem}</div>
+                  <div className="text-[10px] font-bold text-gray-700 mt-0.5 leading-normal whitespace-nowrap overflow-visible">Serviços de Enfermagem</div>
                 </div>
               </div>
 
               {/* Card 3 */}
-              <div className="bg-white border-2 border-emerald-500 rounded-2xl p-2.5 flex items-center gap-3 shadow-sm">
+              <div className="bg-white border-2 border-emerald-500 rounded-2xl p-2.5 flex items-center gap-2.5 shadow-sm">
                 <div className="w-10 h-10 rounded-full bg-emerald-700 text-white flex items-center justify-center text-lg font-bold shrink-0 shadow">
                   👂
                 </div>
-                <div className="min-w-0">
-                  <div className="text-2xl font-black text-[#0B3C2A] leading-none">{totalAudiometria}</div>
-                  <div className="text-[10px] font-bold text-gray-700 mt-1 leading-tight truncate">Audiometrias Ocupacionais</div>
+                <div className="min-w-0 flex-1">
+                  <div className="text-2xl font-black text-[#0B3C2A] leading-tight">{totalAudiometria}</div>
+                  <div className="text-[10px] font-bold text-gray-700 mt-0.5 leading-normal whitespace-nowrap overflow-visible">Audiometrias Ocupacionais</div>
                 </div>
               </div>
 
               {/* Card 4 */}
-              <div className="bg-white border-2 border-emerald-500 rounded-2xl p-2.5 flex items-center gap-3 shadow-sm">
+              <div className="bg-white border-2 border-emerald-500 rounded-2xl p-2.5 flex items-center gap-2.5 shadow-sm">
                 <div className="w-10 h-10 rounded-full bg-emerald-700 text-white flex items-center justify-center text-lg font-bold shrink-0 shadow">
                   🧪
                 </div>
-                <div className="min-w-0">
-                  <div className="text-2xl font-black text-[#0B3C2A] leading-none">{totalColetas}</div>
-                  <div className="text-[10px] font-bold text-gray-700 mt-1 leading-tight truncate">Coletas (Laboratório)</div>
+                <div className="min-w-0 flex-1">
+                  <div className="text-2xl font-black text-[#0B3C2A] leading-tight">{totalColetas}</div>
+                  <div className="text-[10px] font-bold text-gray-700 mt-0.5 leading-normal whitespace-nowrap overflow-visible">Coletas (Laboratório)</div>
                 </div>
               </div>
 
               {/* Card 5 */}
-              <div className="bg-white border-2 border-emerald-500 rounded-2xl p-2.5 flex items-center gap-3 shadow-sm">
+              <div className="bg-white border-2 border-emerald-500 rounded-2xl p-2.5 flex items-center gap-2.5 shadow-sm">
                 <div className="w-10 h-10 rounded-full bg-emerald-700 text-white flex items-center justify-center text-lg font-bold shrink-0 shadow">
                   🔬
                 </div>
-                <div className="min-w-0">
-                  <div className="text-2xl font-black text-[#0B3C2A] leading-none">{totalExames}</div>
-                  <div className="text-[10px] font-bold text-gray-700 mt-1 leading-tight truncate">Exames (Laboratório)</div>
+                <div className="min-w-0 flex-1">
+                  <div className="text-2xl font-black text-[#0B3C2A] leading-tight">{totalExames}</div>
+                  <div className="text-[10px] font-bold text-gray-700 mt-0.5 leading-normal whitespace-nowrap overflow-visible">Exames (Laboratório)</div>
                 </div>
               </div>
             </div>
@@ -345,15 +408,7 @@ export const ReportView: React.FC<ReportViewProps> = ({ report, onBackToEdit }) 
                         fill="none"
                         d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
                       />
-                      {/* Fatia Admissional */}
-                      <path
-                        className="text-blue-600"
-                        strokeWidth="5"
-                        strokeDasharray={`${totalAtendimentos ? (report.atendimentos.admissional / totalAtendimentos) * 100 : 0}, 100`}
-                        stroke="currentColor"
-                        fill="none"
-                        d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                      />
+                      {renderDonutSlices(atendimentosSlices, totalAtendimentos)}
                     </svg>
                     <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
                       <span className="text-base font-black text-gray-900 leading-none">{totalAtendimentos}</span>
@@ -364,79 +419,79 @@ export const ReportView: React.FC<ReportViewProps> = ({ report, onBackToEdit }) 
                   {/* Tabela de Valores */}
                   <div className="flex-1 text-[10px] space-y-0.5">
                     <div className="flex justify-between items-center py-0.5 border-b border-gray-50">
-                      <span className="flex items-center gap-1 font-medium text-gray-800 truncate" title="Admissional">
+                      <span className="flex items-center gap-1 font-medium text-gray-800 whitespace-nowrap overflow-visible leading-normal" title="Admissional">
                         <span className="w-1.5 h-1.5 rounded-sm bg-blue-600 inline-block shrink-0" />
                         Admissional:
                       </span>
                       <div className="flex items-center gap-1 shrink-0">
-                        <span className="font-bold text-gray-900">{report.atendimentos.admissional}</span>
-                        <span className="text-[9px] text-gray-500 font-semibold">{formatPct(report.atendimentos.admissional, totalAtendimentos)}</span>
+                        <span className="font-bold text-gray-900 leading-normal">{report.atendimentos.admissional}</span>
+                        <span className="text-[9px] text-gray-500 font-semibold leading-normal">{formatPct(report.atendimentos.admissional, totalAtendimentos)}</span>
                       </div>
                     </div>
 
                     <div className="flex justify-between items-center py-0.5 border-b border-gray-50">
-                      <span className="flex items-center gap-1 font-medium text-gray-800 truncate" title="Periódico">
+                      <span className="flex items-center gap-1 font-medium text-gray-800 whitespace-nowrap overflow-visible leading-normal" title="Periódico">
                         <span className="w-1.5 h-1.5 rounded-sm bg-emerald-600 inline-block shrink-0" />
                         Periódico:
                       </span>
                       <div className="flex items-center gap-1 shrink-0">
-                        <span className="font-bold text-gray-900">{report.atendimentos.periodico}</span>
-                        <span className="text-[9px] text-gray-500 font-semibold">{formatPct(report.atendimentos.periodico, totalAtendimentos)}</span>
+                        <span className="font-bold text-gray-900 leading-normal">{report.atendimentos.periodico}</span>
+                        <span className="text-[9px] text-gray-500 font-semibold leading-normal">{formatPct(report.atendimentos.periodico, totalAtendimentos)}</span>
                       </div>
                     </div>
 
                     <div className="flex justify-between items-center py-0.5 border-b border-gray-50">
-                      <span className="flex items-center gap-1 font-medium text-gray-800 truncate" title="Demissional">
+                      <span className="flex items-center gap-1 font-medium text-gray-800 whitespace-nowrap overflow-visible leading-normal" title="Demissional">
                         <span className="w-1.5 h-1.5 rounded-sm bg-orange-500 inline-block shrink-0" />
                         Demissional:
                       </span>
                       <div className="flex items-center gap-1 shrink-0">
-                        <span className="font-bold text-gray-900">{report.atendimentos.demissional}</span>
-                        <span className="text-[9px] text-gray-500 font-semibold">{formatPct(report.atendimentos.demissional, totalAtendimentos)}</span>
+                        <span className="font-bold text-gray-900 leading-normal">{report.atendimentos.demissional}</span>
+                        <span className="text-[9px] text-gray-500 font-semibold leading-normal">{formatPct(report.atendimentos.demissional, totalAtendimentos)}</span>
                       </div>
                     </div>
 
                     <div className="flex justify-between items-center py-0.5 border-b border-gray-50">
-                      <span className="flex items-center gap-1 font-medium text-gray-800 truncate" title="Mudanças dos Riscos Ocupacionais">
+                      <span className="flex items-center gap-1 font-medium text-gray-800 whitespace-nowrap overflow-visible leading-normal" title="Mudanças dos Riscos Ocupacionais">
                         <span className="w-1.5 h-1.5 rounded-sm bg-purple-600 inline-block shrink-0" />
                         Mud. Riscos Ocup.:
                       </span>
                       <div className="flex items-center gap-1 shrink-0">
-                        <span className="font-bold text-gray-900">{report.atendimentos.mudancaRisco ?? 0}</span>
-                        <span className="text-[9px] text-gray-500 font-semibold">{formatPct(report.atendimentos.mudancaRisco ?? 0, totalAtendimentos)}</span>
+                        <span className="font-bold text-gray-900 leading-normal">{report.atendimentos.mudancaRisco ?? 0}</span>
+                        <span className="text-[9px] text-gray-500 font-semibold leading-normal">{formatPct(report.atendimentos.mudancaRisco ?? 0, totalAtendimentos)}</span>
                       </div>
                     </div>
 
                     <div className="flex justify-between items-center py-0.5 border-b border-gray-50">
-                      <span className="flex items-center gap-1 font-medium text-gray-800 truncate" title="Consulta">
+                      <span className="flex items-center gap-1 font-medium text-gray-800 whitespace-nowrap overflow-visible leading-normal" title="Consulta">
                         <span className="w-1.5 h-1.5 rounded-sm bg-cyan-600 inline-block shrink-0" />
                         Consulta:
                       </span>
                       <div className="flex items-center gap-1 shrink-0">
-                        <span className="font-bold text-gray-900">{report.atendimentos.consulta ?? report.atendimentos.consultas ?? 0}</span>
-                        <span className="text-[9px] text-gray-500 font-semibold">{formatPct(report.atendimentos.consulta ?? report.atendimentos.consultas ?? 0, totalAtendimentos)}</span>
+                        <span className="font-bold text-gray-900 leading-normal">{report.atendimentos.consulta ?? report.atendimentos.consultas ?? 0}</span>
+                        <span className="text-[9px] text-gray-500 font-semibold leading-normal">{formatPct(report.atendimentos.consulta ?? report.atendimentos.consultas ?? 0, totalAtendimentos)}</span>
                       </div>
                     </div>
 
                     <div className="flex justify-between items-center py-0.5 border-b border-gray-50">
-                      <span className="flex items-center gap-1 font-medium text-gray-800 truncate" title="Retorno">
+                      <span className="flex items-center gap-1 font-medium text-gray-800 whitespace-nowrap overflow-visible leading-normal" title="Retorno">
                         <span className="w-1.5 h-1.5 rounded-sm bg-indigo-500 inline-block shrink-0" />
                         Retorno:
                       </span>
                       <div className="flex items-center gap-1 shrink-0">
-                        <span className="font-bold text-gray-900">{report.atendimentos.retorno ?? 0}</span>
-                        <span className="text-[9px] text-gray-500 font-semibold">{formatPct(report.atendimentos.retorno ?? 0, totalAtendimentos)}</span>
+                        <span className="font-bold text-gray-900 leading-normal">{report.atendimentos.retorno ?? 0}</span>
+                        <span className="text-[9px] text-gray-500 font-semibold leading-normal">{formatPct(report.atendimentos.retorno ?? 0, totalAtendimentos)}</span>
                       </div>
                     </div>
 
                     <div className="flex justify-between items-center py-0.5">
-                      <span className="flex items-center gap-1 font-medium text-gray-800 truncate" title="PCD">
+                      <span className="flex items-center gap-1 font-medium text-gray-800 whitespace-nowrap overflow-visible leading-normal" title="PCD">
                         <span className="w-1.5 h-1.5 rounded-sm bg-amber-600 inline-block shrink-0" />
                         PCD:
                       </span>
                       <div className="flex items-center gap-1 shrink-0">
-                        <span className="font-bold text-gray-900">{report.atendimentos.pcd ?? 0}</span>
-                        <span className="text-[9px] text-gray-500 font-semibold">{formatPct(report.atendimentos.pcd ?? 0, totalAtendimentos)}</span>
+                        <span className="font-bold text-gray-900 leading-normal">{report.atendimentos.pcd ?? 0}</span>
+                        <span className="text-[9px] text-gray-500 font-semibold leading-normal">{formatPct(report.atendimentos.pcd ?? 0, totalAtendimentos)}</span>
                       </div>
                     </div>
                   </div>
@@ -463,7 +518,7 @@ export const ReportView: React.FC<ReportViewProps> = ({ report, onBackToEdit }) 
                   <div className="flex-1 space-y-1">
                     {enfermagemList.map((item, idx) => (
                       <div key={idx} className="flex items-center justify-between text-[10px]">
-                        <div className="flex items-center gap-1 text-gray-800 w-24 truncate font-medium">
+                        <div className="flex items-center gap-1 text-gray-800 w-28 whitespace-nowrap font-medium leading-normal overflow-visible">
                           <span>{item.emoji}</span>
                           <span>{item.nome}</span>
                         </div>
@@ -474,7 +529,7 @@ export const ReportView: React.FC<ReportViewProps> = ({ report, onBackToEdit }) 
                             style={{ width: `${(item.val / maxEnfermagemVal) * 100}%` }}
                           />
                         </div>
-                        <span className="font-bold text-gray-900 w-5 text-right">{item.val}</span>
+                        <span className="font-bold text-gray-900 w-5 text-right leading-normal">{item.val}</span>
                       </div>
                     ))}
                   </div>
@@ -508,14 +563,7 @@ export const ReportView: React.FC<ReportViewProps> = ({ report, onBackToEdit }) 
                         fill="none"
                         d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
                       />
-                      <path
-                        className="text-blue-600"
-                        strokeWidth="5"
-                        strokeDasharray={`${totalAudiometria ? (report.audiometria.admissional / totalAudiometria) * 100 : 0}, 100`}
-                        stroke="currentColor"
-                        fill="none"
-                        d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                      />
+                      {renderDonutSlices(audiometriaSlices, totalAudiometria)}
                     </svg>
                     <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
                       <span className="text-base font-black text-gray-900 leading-none">{totalAudiometria}</span>
@@ -526,68 +574,68 @@ export const ReportView: React.FC<ReportViewProps> = ({ report, onBackToEdit }) 
                   {/* Tabela de Valores */}
                   <div className="flex-1 text-[10px] space-y-0.5">
                     <div className="flex justify-between items-center py-0.5 border-b border-gray-50">
-                      <span className="flex items-center gap-1 font-medium text-gray-800 truncate" title="Admissional">
+                      <span className="flex items-center gap-1 font-medium text-gray-800 whitespace-nowrap overflow-visible leading-normal" title="Admissional">
                         <span className="w-1.5 h-1.5 rounded-sm bg-blue-600 inline-block shrink-0" />
                         Admissional:
                       </span>
                       <div className="flex items-center gap-1 shrink-0">
-                        <span className="font-bold text-gray-900">{report.audiometria.admissional}</span>
-                        <span className="text-[9px] text-gray-500 font-semibold">{formatPct(report.audiometria.admissional, totalAudiometria)}</span>
+                        <span className="font-bold text-gray-900 leading-normal">{report.audiometria.admissional}</span>
+                        <span className="text-[9px] text-gray-500 font-semibold leading-normal">{formatPct(report.audiometria.admissional, totalAudiometria)}</span>
                       </div>
                     </div>
 
                     <div className="flex justify-between items-center py-0.5 border-b border-gray-50">
-                      <span className="flex items-center gap-1 font-medium text-gray-800 truncate" title="Periódico">
+                      <span className="flex items-center gap-1 font-medium text-gray-800 whitespace-nowrap overflow-visible leading-normal" title="Periódico">
                         <span className="w-1.5 h-1.5 rounded-sm bg-emerald-600 inline-block shrink-0" />
                         Periódico:
                       </span>
                       <div className="flex items-center gap-1 shrink-0">
-                        <span className="font-bold text-gray-900">{report.audiometria.periodico}</span>
-                        <span className="text-[9px] text-gray-500 font-semibold">{formatPct(report.audiometria.periodico, totalAudiometria)}</span>
+                        <span className="font-bold text-gray-900 leading-normal">{report.audiometria.periodico}</span>
+                        <span className="text-[9px] text-gray-500 font-semibold leading-normal">{formatPct(report.audiometria.periodico, totalAudiometria)}</span>
                       </div>
                     </div>
 
                     <div className="flex justify-between items-center py-0.5 border-b border-gray-50">
-                      <span className="flex items-center gap-1 font-medium text-gray-800 truncate" title="Demissional">
+                      <span className="flex items-center gap-1 font-medium text-gray-800 whitespace-nowrap overflow-visible leading-normal" title="Demissional">
                         <span className="w-1.5 h-1.5 rounded-sm bg-orange-500 inline-block shrink-0" />
                         Demissional:
                       </span>
                       <div className="flex items-center gap-1 shrink-0">
-                        <span className="font-bold text-gray-900">{report.audiometria.demissional}</span>
-                        <span className="text-[9px] text-gray-500 font-semibold">{formatPct(report.audiometria.demissional, totalAudiometria)}</span>
+                        <span className="font-bold text-gray-900 leading-normal">{report.audiometria.demissional}</span>
+                        <span className="text-[9px] text-gray-500 font-semibold leading-normal">{formatPct(report.audiometria.demissional, totalAudiometria)}</span>
                       </div>
                     </div>
 
                     <div className="flex justify-between items-center py-0.5 border-b border-gray-50">
-                      <span className="flex items-center gap-1 font-medium text-gray-800 truncate" title="Mudanças de Riscos Ocupacionais">
+                      <span className="flex items-center gap-1 font-medium text-gray-800 whitespace-nowrap overflow-visible leading-normal" title="Mudanças de Riscos Ocupacionais">
                         <span className="w-1.5 h-1.5 rounded-sm bg-purple-600 inline-block shrink-0" />
                         Mud. Riscos Ocup.:
                       </span>
                       <div className="flex items-center gap-1 shrink-0">
-                        <span className="font-bold text-gray-900">{report.audiometria.mudancaRisco ?? 0}</span>
-                        <span className="text-[9px] text-gray-500 font-semibold">{formatPct(report.audiometria.mudancaRisco ?? 0, totalAudiometria)}</span>
+                        <span className="font-bold text-gray-900 leading-normal">{report.audiometria.mudancaRisco ?? 0}</span>
+                        <span className="text-[9px] text-gray-500 font-semibold leading-normal">{formatPct(report.audiometria.mudancaRisco ?? 0, totalAudiometria)}</span>
                       </div>
                     </div>
 
                     <div className="flex justify-between items-center py-0.5 border-b border-gray-50">
-                      <span className="flex items-center gap-1 font-medium text-gray-800 truncate" title="Terceiro">
+                      <span className="flex items-center gap-1 font-medium text-gray-800 whitespace-nowrap overflow-visible leading-normal" title="Terceiro">
                         <span className="w-1.5 h-1.5 rounded-sm bg-teal-600 inline-block shrink-0" />
                         Terceiro:
                       </span>
                       <div className="flex items-center gap-1 shrink-0">
-                        <span className="font-bold text-gray-900">{report.audiometria.terceiro ?? 0}</span>
-                        <span className="text-[9px] text-gray-500 font-semibold">{formatPct(report.audiometria.terceiro ?? 0, totalAudiometria)}</span>
+                        <span className="font-bold text-gray-900 leading-normal">{report.audiometria.terceiro ?? 0}</span>
+                        <span className="text-[9px] text-gray-500 font-semibold leading-normal">{formatPct(report.audiometria.terceiro ?? 0, totalAudiometria)}</span>
                       </div>
                     </div>
 
                     <div className="flex justify-between items-center py-0.5">
-                      <span className="flex items-center gap-1 font-medium text-gray-800 truncate" title="Terceiros PCD">
+                      <span className="flex items-center gap-1 font-medium text-gray-800 whitespace-nowrap overflow-visible leading-normal" title="Terceiros PCD">
                         <span className="w-1.5 h-1.5 rounded-sm bg-amber-600 inline-block shrink-0" />
                         Terceiros PCD:
                       </span>
                       <div className="flex items-center gap-1 shrink-0">
-                        <span className="font-bold text-gray-900">{report.audiometria.terceirosPcd ?? 0}</span>
-                        <span className="text-[9px] text-gray-500 font-semibold">{formatPct(report.audiometria.terceirosPcd ?? 0, totalAudiometria)}</span>
+                        <span className="font-bold text-gray-900 leading-normal">{report.audiometria.terceirosPcd ?? 0}</span>
+                        <span className="text-[9px] text-gray-500 font-semibold leading-normal">{formatPct(report.audiometria.terceirosPcd ?? 0, totalAudiometria)}</span>
                       </div>
                     </div>
                   </div>
@@ -662,8 +710,8 @@ export const ReportView: React.FC<ReportViewProps> = ({ report, onBackToEdit }) 
                   <div className="space-y-0.5">
                     {empresasCol1.map(e => (
                       <div key={e.id} className="flex justify-between border-b border-gray-50 pb-0.5">
-                        <span className="text-gray-800 truncate max-w-[85px]">{e.nome}</span>
-                        <span className="font-bold text-gray-900">{e.qtd}</span>
+                        <span className="text-gray-800 truncate max-w-[95px] leading-normal py-0.5" title={e.nome}>{e.nome}</span>
+                        <span className="font-bold text-gray-900 leading-normal">{e.qtd}</span>
                       </div>
                     ))}
                   </div>
@@ -671,8 +719,8 @@ export const ReportView: React.FC<ReportViewProps> = ({ report, onBackToEdit }) 
                   <div className="space-y-0.5">
                     {empresasCol2.map(e => (
                       <div key={e.id} className="flex justify-between border-b border-gray-50 pb-0.5">
-                        <span className="text-gray-800 truncate max-w-[85px]">{e.nome}</span>
-                        <span className="font-bold text-gray-900">{e.qtd}</span>
+                        <span className="text-gray-800 truncate max-w-[95px] leading-normal py-0.5" title={e.nome}>{e.nome}</span>
+                        <span className="font-bold text-gray-900 leading-normal">{e.qtd}</span>
                       </div>
                     ))}
                   </div>
