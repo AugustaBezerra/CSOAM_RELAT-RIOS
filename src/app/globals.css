@@ -2,6 +2,12 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer base {
+  img {
+    display: inline-block !important;
+  }
+}
+
 :root {
   --c-csoam-dark: #006B35;
   --c-csoam-primary: #008C45;

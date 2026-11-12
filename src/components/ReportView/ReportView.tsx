@@ -101,13 +101,22 @@ export const ReportView: React.FC<ReportViewProps> = ({ report, onBackToEdit }) 
     if (!printRef.current) return;
     setDownloading(true);
     try {
+      if (document.fonts?.ready) {
+        await document.fonts.ready;
+      }
       const element = printRef.current;
       const canvas = await html2canvas(element, {
         scale: 2,
         useCORS: true,
         allowTaint: true,
         logging: false,
-        backgroundColor: '#ffffff'
+        backgroundColor: '#ffffff',
+        onclone: (clonedDoc) => {
+          const imgs = clonedDoc.querySelectorAll('img');
+          imgs.forEach((img) => {
+            img.style.display = 'inline-block';
+          });
+        }
       });
       const imgData = canvas.toDataURL('image/png');
       const pdf = new jsPDF({
@@ -131,13 +140,22 @@ export const ReportView: React.FC<ReportViewProps> = ({ report, onBackToEdit }) 
     if (!printRef.current) return;
     setDownloading(true);
     try {
+      if (document.fonts?.ready) {
+        await document.fonts.ready;
+      }
       const element = printRef.current;
       const canvas = await html2canvas(element, {
         scale: 2,
         useCORS: true,
         allowTaint: true,
         logging: false,
-        backgroundColor: '#ffffff'
+        backgroundColor: '#ffffff',
+        onclone: (clonedDoc) => {
+          const imgs = clonedDoc.querySelectorAll('img');
+          imgs.forEach((img) => {
+            img.style.display = 'inline-block';
+          });
+        }
       });
       const link = document.createElement('a');
       link.download = `Relatorio_CSOAM_${report.data.replace(/[/\\-]/g, '_')}.png`;
@@ -401,7 +419,7 @@ export const ReportView: React.FC<ReportViewProps> = ({ report, onBackToEdit }) 
             {/* Fita Resumo do Dia */}
             <div className="relative mt-2 mb-3">
               <div className="h-4 bg-gradient-to-r from-[#006B35] via-[#8BCF27] to-[#1769D2] rounded-full opacity-90" />
-              <div className="absolute -top-1.5 left-4 px-4 py-0.5 bg-[#006B35] text-white text-[11px] font-black rounded-full shadow-md tracking-wider">
+              <div className="absolute -top-2 left-4 px-4 py-1 bg-[#006B35] text-white text-[11px] font-black rounded-full shadow-md tracking-wider leading-normal">
                 RESUMO DO DIA
               </div>
             </div>
@@ -409,57 +427,57 @@ export const ReportView: React.FC<ReportViewProps> = ({ report, onBackToEdit }) 
             {/* 2. 5 CARTÕES KPI DO TOPO */}
             <div className="grid grid-cols-5 gap-3 mt-3">
               {/* Card 1 */}
-              <div className="bg-white border-2 border-emerald-500 rounded-2xl p-2.5 flex items-center gap-2.5 shadow-sm">
+              <div className="bg-white border-2 border-emerald-500 rounded-2xl p-3 flex items-center gap-2.5 shadow-sm">
                 <div className="w-10 h-10 rounded-full bg-emerald-700 text-white flex items-center justify-center text-lg font-bold shrink-0 shadow">
                   👥
                 </div>
                 <div className="min-w-0 flex-1">
-                  <div className="text-2xl font-black text-[#0B3C2A] leading-tight">{totalAtendimentos}</div>
-                  <div className="text-[10px] font-bold text-gray-700 mt-0.5 leading-normal whitespace-nowrap overflow-visible">Atendimentos Ocupacionais</div>
+                  <div className="text-2xl font-black text-[#0B3C2A] leading-none mb-1">{totalAtendimentos}</div>
+                  <div className="text-[10px] font-bold text-gray-700 leading-normal whitespace-nowrap overflow-visible">Atendimentos Ocupacionais</div>
                 </div>
               </div>
 
               {/* Card 2 */}
-              <div className="bg-white border-2 border-emerald-500 rounded-2xl p-2.5 flex items-center gap-2.5 shadow-sm">
+              <div className="bg-white border-2 border-emerald-500 rounded-2xl p-3 flex items-center gap-2.5 shadow-sm">
                 <div className="w-10 h-10 rounded-full bg-emerald-700 text-white flex items-center justify-center text-lg font-bold shrink-0 shadow">
                   🩺
                 </div>
                 <div className="min-w-0 flex-1">
-                  <div className="text-2xl font-black text-[#0B3C2A] leading-tight">{totalEnfermagem}</div>
-                  <div className="text-[10px] font-bold text-gray-700 mt-0.5 leading-normal whitespace-nowrap overflow-visible">Serviços de Enfermagem</div>
+                  <div className="text-2xl font-black text-[#0B3C2A] leading-none mb-1">{totalEnfermagem}</div>
+                  <div className="text-[10px] font-bold text-gray-700 leading-normal whitespace-nowrap overflow-visible">Serviços de Enfermagem</div>
                 </div>
               </div>
 
               {/* Card 3 */}
-              <div className="bg-white border-2 border-emerald-500 rounded-2xl p-2.5 flex items-center gap-2.5 shadow-sm">
+              <div className="bg-white border-2 border-emerald-500 rounded-2xl p-3 flex items-center gap-2.5 shadow-sm">
                 <div className="w-10 h-10 rounded-full bg-emerald-700 text-white flex items-center justify-center text-lg font-bold shrink-0 shadow">
                   👂
                 </div>
                 <div className="min-w-0 flex-1">
-                  <div className="text-2xl font-black text-[#0B3C2A] leading-tight">{totalAudiometria}</div>
-                  <div className="text-[10px] font-bold text-gray-700 mt-0.5 leading-normal whitespace-nowrap overflow-visible">Audiometrias Ocupacionais</div>
+                  <div className="text-2xl font-black text-[#0B3C2A] leading-none mb-1">{totalAudiometria}</div>
+                  <div className="text-[10px] font-bold text-gray-700 leading-normal whitespace-nowrap overflow-visible">Audiometrias Ocupacionais</div>
                 </div>
               </div>
 
               {/* Card 4 */}
-              <div className="bg-white border-2 border-emerald-500 rounded-2xl p-2.5 flex items-center gap-2.5 shadow-sm">
+              <div className="bg-white border-2 border-emerald-500 rounded-2xl p-3 flex items-center gap-2.5 shadow-sm">
                 <div className="w-10 h-10 rounded-full bg-emerald-700 text-white flex items-center justify-center text-lg font-bold shrink-0 shadow">
                   🧪
                 </div>
                 <div className="min-w-0 flex-1">
-                  <div className="text-2xl font-black text-[#0B3C2A] leading-tight">{totalColetas}</div>
-                  <div className="text-[10px] font-bold text-gray-700 mt-0.5 leading-normal whitespace-nowrap overflow-visible">Coletas (Laboratório)</div>
+                  <div className="text-2xl font-black text-[#0B3C2A] leading-none mb-1">{totalColetas}</div>
+                  <div className="text-[10px] font-bold text-gray-700 leading-normal whitespace-nowrap overflow-visible">Coletas (Laboratório)</div>
                 </div>
               </div>
 
               {/* Card 5 */}
-              <div className="bg-white border-2 border-emerald-500 rounded-2xl p-2.5 flex items-center gap-2.5 shadow-sm">
+              <div className="bg-white border-2 border-emerald-500 rounded-2xl p-3 flex items-center gap-2.5 shadow-sm">
                 <div className="w-10 h-10 rounded-full bg-emerald-700 text-white flex items-center justify-center text-lg font-bold shrink-0 shadow">
                   🔬
                 </div>
                 <div className="min-w-0 flex-1">
-                  <div className="text-2xl font-black text-[#0B3C2A] leading-tight">{totalExames}</div>
-                  <div className="text-[10px] font-bold text-gray-700 mt-0.5 leading-normal whitespace-nowrap overflow-visible">Exames (Laboratório)</div>
+                  <div className="text-2xl font-black text-[#0B3C2A] leading-none mb-1">{totalExames}</div>
+                  <div className="text-[10px] font-bold text-gray-700 leading-normal whitespace-nowrap overflow-visible">Exames (Laboratório)</div>
                 </div>
               </div>
             </div>
@@ -572,9 +590,9 @@ export const ReportView: React.FC<ReportViewProps> = ({ report, onBackToEdit }) 
               </div>
 
               {/* Total Pill */}
-              <div className="mt-2 py-1 px-3 rounded-lg bg-emerald-100/80 border border-emerald-300 flex justify-between items-center text-xs font-black text-emerald-900">
-                <span>Total Atendimentos</span>
-                <span>{totalAtendimentos}</span>
+              <div className="mt-2 py-2 px-3 rounded-lg bg-emerald-100/80 border border-emerald-300 flex justify-between items-center text-xs font-black text-emerald-900 leading-normal">
+                <span className="leading-normal py-0.5">Total Atendimentos</span>
+                <span className="leading-normal py-0.5">{totalAtendimentos}</span>
               </div>
             </div>
 
@@ -709,9 +727,9 @@ export const ReportView: React.FC<ReportViewProps> = ({ report, onBackToEdit }) 
               </div>
 
               {/* Total Pill */}
-              <div className="mt-2 py-1 px-3 rounded-lg bg-emerald-100/80 border border-emerald-300 flex justify-between items-center text-xs font-black text-emerald-900">
-                <span>Total Audiometrias</span>
-                <span>{totalAudiometria}</span>
+              <div className="mt-2 py-2 px-3 rounded-lg bg-emerald-100/80 border border-emerald-300 flex justify-between items-center text-xs font-black text-emerald-900 leading-normal">
+                <span className="leading-normal py-0.5">Total Audiometrias</span>
+                <span className="leading-normal py-0.5">{totalAudiometria}</span>
               </div>
             </div>
 
@@ -725,28 +743,28 @@ export const ReportView: React.FC<ReportViewProps> = ({ report, onBackToEdit }) 
               <div className="grid grid-cols-2 gap-2">
                 {/* Coluna Coletas */}
                 <div>
-                  <div className="bg-[#006B35] text-white px-2 py-0.5 rounded-lg text-center font-bold mb-1.5">
+                  <div className="bg-[#006B35] text-white px-2 py-1 rounded-lg text-center font-bold mb-1.5 leading-normal">
                     LABORATÓRIO
                   </div>
                   <div className="space-y-1">
                     <div className="flex justify-between border-b border-gray-100 pb-0.5">
-                      <span className="text-gray-700">Coletas - Ocupac.</span>
-                      <span className="font-bold text-gray-900">{report.coletas.ocupacional}</span>
+                      <span className="text-gray-700 leading-normal">Coletas - Ocupac.</span>
+                      <span className="font-bold text-gray-900 leading-normal">{report.coletas.ocupacional}</span>
                     </div>
                     <div className="flex justify-between border-b border-gray-100 pb-0.5">
-                      <span className="text-gray-700">Coletas - Partic.</span>
-                      <span className="font-bold text-gray-900">{report.coletas.particular}</span>
+                      <span className="text-gray-700 leading-normal">Coletas - Partic.</span>
+                      <span className="font-bold text-gray-900 leading-normal">{report.coletas.particular}</span>
                     </div>
-                    <div className="p-1 rounded bg-emerald-100 font-bold text-emerald-900 flex justify-between mt-2">
-                      <span>Total Coletas</span>
-                      <span>{totalColetas}</span>
+                    <div className="py-1.5 px-2 rounded-lg bg-emerald-100 font-bold text-emerald-900 flex justify-between mt-2 leading-normal">
+                      <span className="leading-normal py-0.5">Total Coletas</span>
+                      <span className="leading-normal py-0.5">{totalColetas}</span>
                     </div>
                   </div>
                 </div>
 
                 {/* Coluna Exames */}
                 <div>
-                  <div className="bg-[#008C45] text-white px-2 py-0.5 rounded-lg text-center font-bold mb-1.5">
+                  <div className="bg-[#008C45] text-white px-2 py-1 rounded-lg text-center font-bold mb-1.5 leading-normal">
                     Exames Realizados
                   </div>
                   <div className="space-y-0.5">
@@ -755,9 +773,9 @@ export const ReportView: React.FC<ReportViewProps> = ({ report, onBackToEdit }) 
                     <div className="flex justify-between"><span>EPF</span><span className="font-bold">{report.exames.epf}</span></div>
                     <div className="flex justify-between"><span>EAS</span><span className="font-bold">{report.exames.eas}</span></div>
                     <div className="flex justify-between"><span>Coprocultura</span><span className="font-bold">{report.exames.coprocultura}</span></div>
-                    <div className="p-1 rounded bg-emerald-100 font-bold text-emerald-900 flex justify-between mt-1">
-                      <span>Total Exames</span>
-                      <span>{totalExames}</span>
+                    <div className="py-1.5 px-2 rounded-lg bg-emerald-100 font-bold text-emerald-900 flex justify-between mt-1 leading-normal">
+                      <span className="leading-normal py-0.5">Total Exames</span>
+                      <span className="leading-normal py-0.5">{totalExames}</span>
                     </div>
                   </div>
                 </div>
@@ -767,9 +785,9 @@ export const ReportView: React.FC<ReportViewProps> = ({ report, onBackToEdit }) 
             {/* Bloco Empresas Atendidas - Cols 4 */}
             <div className="col-span-4 border border-emerald-300 rounded-2xl p-2.5 bg-white text-[10px] flex flex-col justify-between">
               <div>
-                <div className="bg-[#006B35] text-white px-2 py-0.5 rounded-lg text-center font-bold mb-1.5 flex items-center justify-center gap-1">
+                <div className="bg-[#006B35] text-white px-2 py-1 rounded-lg text-center font-bold mb-1.5 flex items-center justify-center gap-1 leading-normal">
                   <span>🏢</span>
-                  <span>EMPRESAS ATENDIDAS ({report.empresas.length})</span>
+                  <span className="leading-normal">EMPRESAS ATENDIDAS ({report.empresas.length})</span>
                 </div>
 
                 <div className="grid grid-cols-2 gap-2 mt-1">
@@ -793,27 +811,27 @@ export const ReportView: React.FC<ReportViewProps> = ({ report, onBackToEdit }) 
                 </div>
               </div>
 
-              <div className="p-1 rounded-lg bg-emerald-100 font-bold text-emerald-900 text-center text-[10px] mt-1">
-                Total de Empresas: {report.empresas.length}
+              <div className="py-2 px-2.5 rounded-lg bg-emerald-100 font-bold text-emerald-900 text-center text-[10px] mt-1 leading-normal">
+                <span className="leading-normal inline-block">Total de Empresas: {report.empresas.length}</span>
               </div>
             </div>
 
             {/* Bloco Observações / Ocorrências - Cols 4 */}
             <div className="col-span-4 border border-emerald-300 rounded-2xl p-2.5 bg-white text-[10px] flex flex-col justify-between">
               <div>
-                <div className="bg-[#006B35] text-white px-2 py-0.5 rounded-lg text-center font-bold mb-1.5 flex items-center justify-center gap-1">
+                <div className="bg-[#006B35] text-white px-2 py-1.5 rounded-lg text-center font-bold mb-1.5 flex items-center justify-center gap-1 leading-normal">
                   <span>✏️</span>
-                  <span>OBSERVAÇÕES / OCORRÊNCIAS</span>
+                  <span className="leading-normal inline-block">OBSERVAÇÕES / OCORRÊNCIAS</span>
                 </div>
 
                 <div className="space-y-1 text-gray-800 py-1 leading-snug">
                   {report.observacoes.split('\n').filter(Boolean).map((line, idx) => (
-                    <div key={idx} className="border-b border-gray-100 pb-0.5">
+                    <div key={idx} className="border-b border-gray-100 pb-0.5 leading-normal">
                       {line.startsWith('•') ? line : `• ${line}`}
                     </div>
                   ))}
                   {report.observacoes.split('\n').filter(Boolean).length === 0 && (
-                    <div className="text-gray-400 italic">Nenhuma intercorrência registrada no plantão.</div>
+                    <div className="text-gray-400 italic leading-normal">Nenhuma intercorrência registrada no plantão.</div>
                   )}
                 </div>
               </div>
@@ -824,22 +842,22 @@ export const ReportView: React.FC<ReportViewProps> = ({ report, onBackToEdit }) 
           {/* 5. RODAPÉ OFICIAL: ANÁLISE DO DIA & EQUIPE RESPONSÁVEL */}
           <div className="space-y-1.5 mt-1">
             {/* Faixa Análise do Dia */}
-            <div className="border border-emerald-200 rounded-xl px-3 py-1 bg-gradient-to-r from-emerald-50/90 via-white to-emerald-50/90 flex items-center justify-between text-[9px] text-gray-700">
+            <div className="border border-emerald-200 rounded-xl px-3 py-1.5 bg-gradient-to-r from-emerald-50/90 via-white to-emerald-50/90 flex items-center justify-between text-[9px] text-gray-700 leading-normal">
               <div className="flex items-center gap-2">
-                <span className="px-2 py-0.5 rounded-full bg-[#006B35] text-white text-[9px] font-black uppercase tracking-wide">
+                <span className="px-2.5 py-1 rounded-full bg-[#006B35] text-white text-[9px] font-black uppercase tracking-wide leading-normal inline-block">
                   📈 ANÁLISE DO DIA
                 </span>
-                <span className="flex items-center gap-1 font-medium">
-                  <CheckCircle className="w-3 h-3 text-emerald-600 inline" />
+                <span className="flex items-center gap-1 font-medium leading-normal">
+                  <CheckCircle className="w-3 h-3 text-emerald-600 inline shrink-0" />
                   Produção dentro da capacidade operacional.
                 </span>
                 <span className="text-gray-300">•</span>
-                <span className="flex items-center gap-1 font-medium">
-                  <CheckCircle className="w-3 h-3 text-emerald-600 inline" />
+                <span className="flex items-center gap-1 font-medium leading-normal">
+                  <CheckCircle className="w-3 h-3 text-emerald-600 inline shrink-0" />
                   Principais demandas: admissionais e triagens.
                 </span>
               </div>
-              <span className="text-emerald-800 font-bold text-[9px]">
+              <span className="text-emerald-800 font-bold text-[9px] leading-normal">
                 {report.unidade} • {formatDateDisplay(report.data)} • Turno {report.turno}
               </span>
             </div>
@@ -849,9 +867,9 @@ export const ReportView: React.FC<ReportViewProps> = ({ report, onBackToEdit }) 
               <div className="grid grid-cols-12 divide-x divide-emerald-200 text-[10px]">
                 
                 {/* Título da Seção */}
-                <div className="col-span-3 bg-[#006B35] text-white p-2 flex items-center justify-center gap-2 text-center">
+                <div className="col-span-3 bg-[#006B35] text-white p-2.5 flex items-center justify-center gap-2 text-center">
                   <Users className="w-4 h-4 text-[#8BCF27] shrink-0" />
-                  <div className="font-black tracking-tight text-[9px] leading-tight uppercase">
+                  <div className="font-black tracking-tight text-[9px] leading-normal uppercase">
                     <span>EQUIPE RESPONSÁVEL</span><br />
                     <span className="text-[#8BCF27]">PELOS REGISTROS</span>
                   </div>
@@ -859,49 +877,49 @@ export const ReportView: React.FC<ReportViewProps> = ({ report, onBackToEdit }) 
 
                 {/* Coluna 1: Medicina Ocupacional */}
                 <div className="col-span-3 flex flex-col justify-between">
-                  <div className="bg-emerald-50/80 text-[#006B35] font-bold text-center py-0.5 border-b border-emerald-200 text-[9px] flex items-center justify-center gap-1">
-                    <Stethoscope className="w-3 h-3 text-emerald-700" />
-                    <span>Medicina Ocupacional</span>
+                  <div className="bg-emerald-50/80 text-[#006B35] font-bold text-center py-1.5 border-b border-emerald-200 text-[9px] flex items-center justify-center gap-1 leading-normal">
+                    <Stethoscope className="w-3 h-3 text-emerald-700 shrink-0" />
+                    <span className="leading-normal">Medicina Ocupacional</span>
                   </div>
-                  <div className="p-1.5 text-center flex-1 flex flex-col justify-center">
-                    <div className="font-black text-gray-900 leading-tight text-[10px]">{medicoInfo.nome}</div>
-                    <div className="text-[8px] text-gray-500 font-medium">{medicoInfo.cargo}</div>
+                  <div className="py-2 px-1 text-center flex-1 flex flex-col justify-center">
+                    <div className="font-black text-gray-900 leading-normal text-[10px] pb-0.5">{medicoInfo.nome}</div>
+                    <div className="text-[8px] text-gray-500 font-medium leading-normal">{medicoInfo.cargo}</div>
                   </div>
                 </div>
 
                 {/* Coluna 2: Enfermagem */}
                 <div className="col-span-2 flex flex-col justify-between">
-                  <div className="bg-emerald-50/80 text-[#006B35] font-bold text-center py-0.5 border-b border-emerald-200 text-[9px] flex items-center justify-center gap-1">
-                    <HeartPulse className="w-3 h-3 text-emerald-700" />
-                    <span>Enfermagem</span>
+                  <div className="bg-emerald-50/80 text-[#006B35] font-bold text-center py-1.5 border-b border-emerald-200 text-[9px] flex items-center justify-center gap-1 leading-normal">
+                    <HeartPulse className="w-3 h-3 text-emerald-700 shrink-0" />
+                    <span className="leading-normal">Enfermagem</span>
                   </div>
-                  <div className="p-1.5 text-center flex-1 flex flex-col justify-center">
-                    <div className="font-black text-gray-900 leading-tight text-[10px]">TET: Rosineide Souza</div>
-                    <div className="text-[8px] text-gray-500 font-medium">COREN: 385.633</div>
+                  <div className="py-2 px-1 text-center flex-1 flex flex-col justify-center">
+                    <div className="font-black text-gray-900 leading-normal text-[10px] pb-0.5">TET: Rosineide Souza</div>
+                    <div className="text-[8px] text-gray-500 font-medium leading-normal">COREN: 385.633</div>
                   </div>
                 </div>
 
                 {/* Coluna 3: Fonoaudiologia */}
                 <div className="col-span-2 flex flex-col justify-between">
-                  <div className="bg-emerald-50/80 text-[#006B35] font-bold text-center py-0.5 border-b border-emerald-200 text-[9px] flex items-center justify-center gap-1">
-                    <Ear className="w-3 h-3 text-emerald-700" />
-                    <span>Fonoaudiologia</span>
+                  <div className="bg-emerald-50/80 text-[#006B35] font-bold text-center py-1.5 border-b border-emerald-200 text-[9px] flex items-center justify-center gap-1 leading-normal">
+                    <Ear className="w-3 h-3 text-emerald-700 shrink-0" />
+                    <span className="leading-normal">Fonoaudiologia</span>
                   </div>
-                  <div className="p-1.5 text-center flex-1 flex flex-col justify-center">
-                    <div className="font-black text-gray-900 leading-tight text-[10px]">Fga. Elise Beatriz</div>
-                    <div className="text-[8px] text-gray-500 font-medium">CRFa: 9-2207</div>
+                  <div className="py-2 px-1 text-center flex-1 flex flex-col justify-center">
+                    <div className="font-black text-gray-900 leading-normal text-[10px] pb-0.5">Fga. Elise Beatriz</div>
+                    <div className="text-[8px] text-gray-500 font-medium leading-normal">CRFa: 9-2207</div>
                   </div>
                 </div>
 
                 {/* Coluna 4: Laboratório (Biomédica) */}
                 <div className="col-span-2 flex flex-col justify-between">
-                  <div className="bg-emerald-50/80 text-[#006B35] font-bold text-center py-0.5 border-b border-emerald-200 text-[9px] flex items-center justify-center gap-1">
+                  <div className="bg-emerald-50/80 text-[#006B35] font-bold text-center py-1.5 border-b border-emerald-200 text-[9px] flex items-center justify-center gap-1 leading-normal">
                     <span className="text-[9px]">🔬</span>
-                    <span>Laboratório (Biomédica)</span>
+                    <span className="leading-normal">Laboratório (Biomédica)</span>
                   </div>
-                  <div className="p-1.5 text-center flex-1 flex flex-col justify-center">
-                    <div className="font-black text-gray-900 leading-tight text-[10px]">Maria Elcila</div>
-                    <div className="text-[8px] text-gray-500 font-medium">CRBM: 8345</div>
+                  <div className="py-2 px-1 text-center flex-1 flex flex-col justify-center">
+                    <div className="font-black text-gray-900 leading-normal text-[10px] pb-0.5">Maria Elcila</div>
+                    <div className="text-[8px] text-gray-500 font-medium leading-normal">CRBM: 8345</div>
                   </div>
                 </div>
 
