@@ -8,7 +8,13 @@ import { ReportView } from '@/components/ReportView/ReportView';
 import { HistoryView } from '@/components/History/HistoryView';
 import { DailyReport } from '@/lib/types';
 import { initialReportData, getEmptyDailyReport } from '@/lib/mockData';
-import { saveReportToFirebase, getReportsFromFirebase, auth } from '@/lib/firebase';
+import {
+  saveReportToFirebase,
+  getReportsFromFirebase,
+  getLocalReports,
+  removeLocalReport,
+  auth
+} from '@/lib/firebase';
 import { signOut, onAuthStateChanged } from 'firebase/auth';
 import { CheckCircle2, AlertCircle } from 'lucide-react';
 
@@ -51,16 +57,36 @@ export default function Home() {
     }
   }, []);
 
-  // Fetch reports from Firebase on start
+  // Carrega imediatamente os relatórios salvos no navegador (sem esperar a nuvem)
   useEffect(() => {
+    try {
+      const cached = getLocalReports();
+      if (cached && cached.length > 0) {
+        setReportsList(prev => {
+          const map = new Map<string, DailyReport>();
+          // Relatório do dia 09/11 de exemplo
+          map.set(initialReportData.data, initialReportData);
+          cached.forEach(r => map.set(r.data, r));
+          return Array.from(map.values()).sort((a, b) => b.data.localeCompare(a.data));
+        });
+      }
+    } catch (e) {
+      console.warn("Local cache load warning:", e);
+    }
+
     async function loadReports() {
       try {
         const fetched = await getReportsFromFirebase();
         if (fetched && fetched.length > 0) {
-          setReportsList(fetched);
+          setReportsList(prev => {
+            const map = new Map<string, DailyReport>();
+            map.set(initialReportData.data, initialReportData);
+            fetched.forEach(r => map.set(r.data, r));
+            return Array.from(map.values()).sort((a, b) => b.data.localeCompare(a.data));
+          });
         }
       } catch (e) {
-        console.warn("Could not load initial reports:", e);
+        console.warn("Cloud reports load warning:", e);
       }
     }
     loadReports();
@@ -141,6 +167,7 @@ export default function Home() {
   const handleDeleteReport = (id?: string) => {
     if (!id) return;
     if (confirm("Tem certeza que deseja excluir este relatório?")) {
+      removeLocalReport(id);
       setReportsList(prev => prev.filter(r => r.id !== id));
       showToast("Relatório removido.", "success");
     }

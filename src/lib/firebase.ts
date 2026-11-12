@@ -62,65 +62,89 @@ const COLLECTION_NAME = 'relatorios_diarios';
 
 // Helper to save report in Firestore (with localStorage cache fallback)
 export async function saveReportToFirebase(report: DailyReport): Promise<string> {
+  const localId = report.id || 'csoam_rel_' + Date.now();
+  const reportToSave = { ...report, id: localId };
+
+  // 1. SEMPRE grava localmente PRIMEIRO para ser 100% imediato e garantido
+  cacheLocally(reportToSave);
+
+  // 2. Se o Firestore estiver configurado, tenta sincronizar na nuvem com timeout de 2.5s
   if (db) {
     try {
-      const reportData = {
-        ...report,
-        atualizadoEm: serverTimestamp()
+      const timeoutPromise = new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error('Firestore timeout')), 2500)
+      );
+
+      const firestoreAction = async () => {
+        const reportData = {
+          ...reportToSave,
+          atualizadoEm: serverTimestamp()
+        };
+
+        if (report.id && !report.id.startsWith('csoam_rel_') && !report.id.startsWith('local_')) {
+          const docRef = doc(db, COLLECTION_NAME, report.id);
+          await updateDoc(docRef, reportData);
+          return report.id;
+        } else {
+          const docRef = await addDoc(collection(db, COLLECTION_NAME), {
+            ...reportData,
+            criadoEm: serverTimestamp()
+          });
+          const cloudReport = { ...reportToSave, id: docRef.id };
+          cacheLocally(cloudReport);
+          return docRef.id;
+        }
       };
 
-      if (report.id && !report.id.startsWith('local_')) {
-        const docRef = doc(db, COLLECTION_NAME, report.id);
-        await updateDoc(docRef, reportData);
-        cacheLocally(report);
-        return report.id;
-      } else {
-        const docRef = await addDoc(collection(db, COLLECTION_NAME), {
-          ...reportData,
-          criadoEm: serverTimestamp()
-        });
-        const newReport = { ...report, id: docRef.id };
-        cacheLocally(newReport);
-        return docRef.id;
-      }
+      const finalId = await Promise.race([firestoreAction(), timeoutPromise]);
+      return finalId;
     } catch (error) {
-      console.warn("Firestore save error, falling back to local storage:", error);
+      console.warn("Firestore sync warning (salvo localmente com segurança):", error);
     }
   }
 
-  const localId = report.id || 'local_' + Date.now();
-  const localReport = { ...report, id: localId };
-  cacheLocally(localReport);
   return localId;
 }
 
 // Helper to fetch all reports from Firestore
 export async function getReportsFromFirebase(): Promise<DailyReport[]> {
+  const localReports = getLocalReports();
+
   if (db) {
     try {
-      const q = query(collection(db, COLLECTION_NAME), orderBy('data', 'desc'));
-      const snapshot = await getDocs(q);
-      const reports: DailyReport[] = [];
-      snapshot.forEach(docSnap => {
-        reports.push({ id: docSnap.id, ...docSnap.data() } as DailyReport);
-      });
+      const timeoutPromise = new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error('Firestore timeout')), 2500)
+      );
 
-      if (reports.length > 0) {
-        return reports;
+      const firestoreFetch = async () => {
+        const q = query(collection(db, COLLECTION_NAME), orderBy('data', 'desc'));
+        const snapshot = await getDocs(q);
+        const cloudReports: DailyReport[] = [];
+        snapshot.forEach(docSnap => {
+          cloudReports.push({ id: docSnap.id, ...docSnap.data() } as DailyReport);
+        });
+        return cloudReports;
+      };
+
+      const fetched = await Promise.race([firestoreFetch(), timeoutPromise]);
+      if (fetched && fetched.length > 0) {
+        fetched.forEach(cr => cacheLocally(cr));
+        return getLocalReports();
       }
     } catch (error) {
-      console.warn("Firestore fetch error, reading local cache:", error);
+      console.warn("Firestore fetch warning (usando relatórios locais):", error);
     }
   }
-  return getLocalReports();
+
+  return localReports;
 }
 
 // Local Storage helpers
-function cacheLocally(report: DailyReport) {
+export function cacheLocally(report: DailyReport) {
   if (typeof window === 'undefined') return;
   try {
     const existing = getLocalReports();
-    const index = existing.findIndex(r => r.id === report.id || r.data === report.data);
+    const index = existing.findIndex(r => (report.id && r.id === report.id) || r.data === report.data);
     if (index >= 0) {
       existing[index] = report;
     } else {
@@ -132,12 +156,23 @@ function cacheLocally(report: DailyReport) {
   }
 }
 
-function getLocalReports(): DailyReport[] {
+export function getLocalReports(): DailyReport[] {
   if (typeof window === 'undefined') return [];
   try {
     const data = localStorage.getItem('csoam_reports_cache');
     return data ? JSON.parse(data) : [];
   } catch (e) {
     return [];
+  }
+}
+
+export function removeLocalReport(id?: string) {
+  if (typeof window === 'undefined' || !id) return;
+  try {
+    const existing = getLocalReports();
+    const filtered = existing.filter(r => r.id !== id);
+    localStorage.setItem('csoam_reports_cache', JSON.stringify(filtered));
+  } catch (e) {
+    console.error("Local storage remove error:", e);
   }
 }
