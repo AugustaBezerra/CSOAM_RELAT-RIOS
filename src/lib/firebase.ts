@@ -5,6 +5,7 @@ import {
   collection,
   addDoc,
   updateDoc,
+  deleteDoc,
   doc,
   getDocs,
   query,
@@ -59,11 +60,60 @@ if (isFirebaseConfigured) {
 export { auth, db };
 
 const COLLECTION_NAME = 'relatorios_diarios';
+const DELETED_REPORTS_KEY = 'csoam_deleted_reports_ids';
+
+// Gerenciamento de relatórios excluídos (tombstone) para nunca reaparecerem ao recarregar a página
+export function getDeletedReportIds(): string[] {
+  if (typeof window === 'undefined') return [];
+  try {
+    const data = localStorage.getItem(DELETED_REPORTS_KEY);
+    return data ? JSON.parse(data) : [];
+  } catch (e) {
+    return [];
+  }
+}
+
+export function markReportAsDeleted(idOrDate: string) {
+  if (typeof window === 'undefined' || !idOrDate) return;
+  try {
+    const ids = getDeletedReportIds();
+    if (!ids.includes(idOrDate)) {
+      ids.push(idOrDate);
+      localStorage.setItem(DELETED_REPORTS_KEY, JSON.stringify(ids));
+    }
+  } catch (e) {
+    console.error("Error marking report as deleted:", e);
+  }
+}
+
+export function unmarkReportAsDeleted(idOrDate: string) {
+  if (typeof window === 'undefined' || !idOrDate) return;
+  try {
+    const ids = getDeletedReportIds();
+    const filtered = ids.filter(id => id !== idOrDate);
+    localStorage.setItem(DELETED_REPORTS_KEY, JSON.stringify(filtered));
+  } catch (e) {
+    console.error("Error unmarking report as deleted:", e);
+  }
+}
+
+export function isReportDeleted(id?: string, date?: string): boolean {
+  if (typeof window === 'undefined') return false;
+  const deleted = getDeletedReportIds();
+  if (id && deleted.includes(id)) return true;
+  if (date && deleted.includes(date)) return true;
+  return false;
+}
 
 // Helper to save report in Firestore (with localStorage cache fallback)
 export async function saveReportToFirebase(report: DailyReport): Promise<string> {
   const localId = report.id || 'csoam_rel_' + Date.now();
   const reportToSave = { ...report, id: localId };
+
+  // Se este relatório ou data foi marcado como excluído anteriormente, remove da lista de excluídos
+  if (report.id) unmarkReportAsDeleted(report.id);
+  if (report.data) unmarkReportAsDeleted(report.data);
+  unmarkReportAsDeleted(localId);
 
   // 1. SEMPRE grava localmente PRIMEIRO para ser 100% imediato e garantido
   cacheLocally(reportToSave);
@@ -106,6 +156,48 @@ export async function saveReportToFirebase(report: DailyReport): Promise<string>
   return localId;
 }
 
+// Helper to delete report permanently from Firestore and LocalStorage
+export async function deleteReportFromFirebase(id?: string, date?: string): Promise<boolean> {
+  // 1. Registra imediatamente como excluído para bloquear em qualquer carregamento
+  if (id) markReportAsDeleted(id);
+  if (date) markReportAsDeleted(date);
+
+  // 2. Remove do cache local (localStorage)
+  removeLocalReport(id, date);
+
+  // 3. Remove permanentemente do Firestore
+  if (db) {
+    try {
+      // Deleta por ID do documento caso seja um ID válido do Firestore
+      if (id && !id.startsWith('csoam_rel_') && !id.startsWith('local_') && id !== 'rel_09_11_2026') {
+        const docRef = doc(db, COLLECTION_NAME, id);
+        await deleteDoc(docRef);
+      }
+
+      // Procura e deleta por data ou ID correspondente no Firestore para garantir limpeza total
+      const q = query(collection(db, COLLECTION_NAME));
+      const snapshot = await getDocs(q);
+      const deletePromises: Promise<any>[] = [];
+
+      snapshot.forEach(docSnap => {
+        const docData = docSnap.data();
+        if (docSnap.id === id || (date && docData && docData.data === date)) {
+          deletePromises.push(deleteDoc(doc(db, COLLECTION_NAME, docSnap.id)));
+        }
+      });
+
+      if (deletePromises.length > 0) {
+        await Promise.all(deletePromises);
+      }
+      return true;
+    } catch (error) {
+      console.warn("Firestore delete warning:", error);
+    }
+  }
+
+  return true;
+}
+
 // Helper to fetch all reports from Firestore
 export async function getReportsFromFirebase(): Promise<DailyReport[]> {
   const localReports = getLocalReports();
@@ -121,14 +213,24 @@ export async function getReportsFromFirebase(): Promise<DailyReport[]> {
         const snapshot = await getDocs(q);
         const cloudReports: DailyReport[] = [];
         snapshot.forEach(docSnap => {
-          cloudReports.push({ id: docSnap.id, ...docSnap.data() } as DailyReport);
+          const report = { id: docSnap.id, ...docSnap.data() } as DailyReport;
+          // Se foi marcado como excluído, remove da nuvem e não lista
+          if (isReportDeleted(report.id, report.data)) {
+            deleteDoc(doc(db, COLLECTION_NAME, docSnap.id)).catch(() => {});
+          } else {
+            cloudReports.push(report);
+          }
         });
         return cloudReports;
       };
 
       const fetched = await Promise.race([firestoreFetch(), timeoutPromise]);
       if (fetched && fetched.length > 0) {
-        fetched.forEach(cr => cacheLocally(cr));
+        fetched.forEach(cr => {
+          if (!isReportDeleted(cr.id, cr.data)) {
+            cacheLocally(cr);
+          }
+        });
         return getLocalReports();
       }
     } catch (error) {
@@ -136,12 +238,15 @@ export async function getReportsFromFirebase(): Promise<DailyReport[]> {
     }
   }
 
-  return localReports;
+  return localReports.filter(r => !isReportDeleted(r.id, r.data));
 }
 
 // Local Storage helpers
 export function cacheLocally(report: DailyReport) {
   if (typeof window === 'undefined') return;
+  // Se estiver marcado como excluído, não salva no cache
+  if (isReportDeleted(report.id, report.data)) return;
+
   try {
     const existing = getLocalReports();
     const index = existing.findIndex(r => (report.id && r.id === report.id) || r.data === report.data);
@@ -160,17 +265,23 @@ export function getLocalReports(): DailyReport[] {
   if (typeof window === 'undefined') return [];
   try {
     const data = localStorage.getItem('csoam_reports_cache');
-    return data ? JSON.parse(data) : [];
+    const reports: DailyReport[] = data ? JSON.parse(data) : [];
+    return reports.filter(r => !isReportDeleted(r.id, r.data));
   } catch (e) {
     return [];
   }
 }
 
-export function removeLocalReport(id?: string) {
-  if (typeof window === 'undefined' || !id) return;
+export function removeLocalReport(id?: string, date?: string) {
+  if (typeof window === 'undefined') return;
   try {
-    const existing = getLocalReports();
-    const filtered = existing.filter(r => r.id !== id);
+    const data = localStorage.getItem('csoam_reports_cache');
+    const existing: DailyReport[] = data ? JSON.parse(data) : [];
+    const filtered = existing.filter(r => {
+      if (id && r.id === id) return false;
+      if (date && r.data === date) return false;
+      return true;
+    });
     localStorage.setItem('csoam_reports_cache', JSON.stringify(filtered));
   } catch (e) {
     console.error("Local storage remove error:", e);

@@ -9,7 +9,7 @@ interface HistoryViewProps {
   onSelectReport: (report: DailyReport) => void;
   onEditReport: (report: DailyReport) => void;
   onNewReport: () => void;
-  onDeleteReport: (id?: string) => void;
+  onDeleteReport: (report: DailyReport) => void;
 }
 
 export const HistoryView: React.FC<HistoryViewProps> = ({
@@ -158,7 +158,7 @@ export const HistoryView: React.FC<HistoryViewProps> = ({
                           <Edit className="w-4 h-4" />
                         </button>
                         <button
-                          onClick={() => onDeleteReport(rep.id)}
+                          onClick={() => onDeleteReport(rep)}
                           title="Excluir"
                           className="p-1.5 rounded-lg border border-gray-200 text-gray-400 hover:text-red-600 hover:border-red-200 hover:bg-red-50 transition-colors inline-block"
                         >

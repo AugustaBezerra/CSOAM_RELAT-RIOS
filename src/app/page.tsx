@@ -12,7 +12,8 @@ import {
   saveReportToFirebase,
   getReportsFromFirebase,
   getLocalReports,
-  removeLocalReport,
+  deleteReportFromFirebase,
+  isReportDeleted,
   auth
 } from '@/lib/firebase';
 import { signOut, onAuthStateChanged } from 'firebase/auth';
@@ -24,7 +25,20 @@ export default function Home() {
   const [currentTab, setCurrentTab] = useState<'form' | 'report' | 'history'>('history');
   // O formulário de preenchimento começa 100% ZERADO
   const [currentReport, setCurrentReport] = useState<DailyReport>(getEmptyDailyReport());
-  const [reportsList, setReportsList] = useState<DailyReport[]>([initialReportData]);
+  const [reportsList, setReportsList] = useState<DailyReport[]>(() => {
+    if (typeof window === 'undefined') return [initialReportData];
+    const map = new Map<string, DailyReport>();
+    if (!isReportDeleted(initialReportData.id, initialReportData.data)) {
+      map.set(initialReportData.data, initialReportData);
+    }
+    const cached = getLocalReports();
+    cached.forEach(r => {
+      if (!isReportDeleted(r.id, r.data)) {
+        map.set(r.data, r);
+      }
+    });
+    return Array.from(map.values()).sort((a, b) => b.data.localeCompare(a.data));
+  });
   const [saving, setSaving] = useState(false);
   const [toastMessage, setToastMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
 
@@ -61,15 +75,18 @@ export default function Home() {
   useEffect(() => {
     try {
       const cached = getLocalReports();
-      if (cached && cached.length > 0) {
-        setReportsList(prev => {
-          const map = new Map<string, DailyReport>();
-          // Relatório do dia 09/11 de exemplo
+      setReportsList(() => {
+        const map = new Map<string, DailyReport>();
+        if (!isReportDeleted(initialReportData.id, initialReportData.data)) {
           map.set(initialReportData.data, initialReportData);
-          cached.forEach(r => map.set(r.data, r));
-          return Array.from(map.values()).sort((a, b) => b.data.localeCompare(a.data));
+        }
+        cached.forEach(r => {
+          if (!isReportDeleted(r.id, r.data)) {
+            map.set(r.data, r);
+          }
         });
-      }
+        return Array.from(map.values()).sort((a, b) => b.data.localeCompare(a.data));
+      });
     } catch (e) {
       console.warn("Local cache load warning:", e);
     }
@@ -77,11 +94,17 @@ export default function Home() {
     async function loadReports() {
       try {
         const fetched = await getReportsFromFirebase();
-        if (fetched && fetched.length > 0) {
-          setReportsList(prev => {
+        if (fetched) {
+          setReportsList(() => {
             const map = new Map<string, DailyReport>();
-            map.set(initialReportData.data, initialReportData);
-            fetched.forEach(r => map.set(r.data, r));
+            if (!isReportDeleted(initialReportData.id, initialReportData.data)) {
+              map.set(initialReportData.data, initialReportData);
+            }
+            fetched.forEach(r => {
+              if (!isReportDeleted(r.id, r.data)) {
+                map.set(r.data, r);
+              }
+            });
             return Array.from(map.values()).sort((a, b) => b.data.localeCompare(a.data));
           });
         }
@@ -164,12 +187,24 @@ export default function Home() {
     showToast("Novo formulário em branco iniciado!", "success");
   };
 
-  const handleDeleteReport = (id?: string) => {
-    if (!id) return;
-    if (confirm("Tem certeza que deseja excluir este relatório?")) {
-      removeLocalReport(id);
-      setReportsList(prev => prev.filter(r => r.id !== id));
-      showToast("Relatório removido.", "success");
+  const handleDeleteReport = async (reportOrId: DailyReport | string) => {
+    const targetId = typeof reportOrId === 'string' ? reportOrId : reportOrId.id;
+    const targetDate = typeof reportOrId === 'string' ? undefined : reportOrId.data;
+
+    if (!targetId && !targetDate) return;
+
+    if (confirm("Tem certeza que deseja excluir permanentemente este relatório?")) {
+      // 1. Remove da interface imediatamente
+      setReportsList(prev => prev.filter(r => {
+        if (targetId && r.id === targetId) return false;
+        if (targetDate && r.data === targetDate) return false;
+        return true;
+      }));
+
+      // 2. Remove permanentemente do LocalStorage e do Firestore
+      await deleteReportFromFirebase(targetId, targetDate);
+
+      showToast("Relatório excluído permanentemente!", "success");
     }
   };
 
