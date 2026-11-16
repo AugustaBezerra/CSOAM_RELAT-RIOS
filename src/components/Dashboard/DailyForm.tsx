@@ -7,6 +7,7 @@ import {
   Save, Eye, Calendar, MapPin, Clock, User
 } from 'lucide-react';
 import { DailyReport, EmpresaItem } from '@/lib/types';
+import { computePrincipaisDemandas, getRankedDemandas } from '@/lib/demandasAnalysis';
 
 interface DailyFormProps {
   report: DailyReport;
@@ -72,6 +73,10 @@ export const DailyForm: React.FC<DailyFormProps> = ({
     (report.exames.outros?.reduce((acc, curr) => acc + (Number(curr.qtd) || 0), 0) || 0);
 
   const totalEmpresasCount = report.empresas.length;
+
+  // Análise dinâmica em tempo real das principais demandas
+  const autoDemandas = computePrincipaisDemandas(report);
+  const rankedDemandas = getRankedDemandas(report);
 
   const handleFieldChange = (section: keyof DailyReport, field: string, val: any) => {
     onUpdateReport({
@@ -888,12 +893,120 @@ export const DailyForm: React.FC<DailyFormProps> = ({
         </div>
       </div>
 
+      {/* BLOCO 7: ANÁLISE AUTOMÁTICA DO DIA (MAIORES DEMANDAS) */}
+      <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-sm border border-gray-200/80">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-gray-100 mb-4 gap-2">
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center font-bold">
+              7
+            </div>
+            <div>
+              <h2 className="text-base font-bold text-gray-900">Análise do Dia (Maiores Demandas)</h2>
+              <p className="text-xs text-gray-500">Calculado automaticamente pelo sistema com base nos volumes inseridos</p>
+            </div>
+          </div>
+          <span className="self-start sm:self-auto px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 text-xs font-bold flex items-center gap-1.5">
+            <span>⚡</span>
+            <span>Automático em Tempo Real</span>
+          </span>
+        </div>
+
+        <div className="bg-emerald-50/60 border border-emerald-200 rounded-2xl p-4 sm:p-5 space-y-4">
+          <div className="flex items-start gap-3">
+            <span className="text-xl shrink-0">📈</span>
+            <div className="flex-1">
+              <span className="text-xs font-black uppercase text-emerald-950 tracking-wide block mb-1">
+                Principais demandas identificadas hoje:
+              </span>
+              <div className="text-sm sm:text-base font-extrabold text-[#006B35] bg-white px-3.5 py-2.5 rounded-xl border border-emerald-200 shadow-2xs">
+                {report.analiseDia?.principaisDemandas && report.analiseDia.principaisDemandas.trim() !== '' && report.analiseDia.principaisDemandas !== 'admissionais e triagens.'
+                  ? report.analiseDia.principaisDemandas
+                  : autoDemandas}
+              </div>
+            </div>
+          </div>
+
+          {/* Ranking dos itens com maior volume no dia */}
+          {rankedDemandas.length > 0 && (
+            <div className="pt-3 border-t border-emerald-200/70">
+              <span className="text-xs font-bold text-gray-700 block mb-2">
+                Ranking dos procedimentos com maior saída hoje:
+              </span>
+              <div className="flex flex-wrap gap-2">
+                {rankedDemandas.slice(0, 5).map((d, i) => (
+                  <span
+                    key={i}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white border border-emerald-200 text-xs font-semibold text-gray-800 shadow-2xs"
+                  >
+                    <span className="w-4 h-4 rounded-full bg-[#006B35] text-white text-[10px] font-bold flex items-center justify-center shrink-0">
+                      {i + 1}
+                    </span>
+                    <span className="capitalize">{d.nome}</span>:
+                    <strong className="text-[#006B35] font-black">{d.qtd}</strong>
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Campo opcional para personalizar caso queiram escrever uma frase específica */}
+          <div className="pt-2">
+            <label className="text-xs font-semibold text-gray-600 block mb-1">
+              Personalizar texto da análise no relatório (opcional):
+            </label>
+            <div className="flex flex-col sm:flex-row gap-2">
+              <input
+                type="text"
+                value={report.analiseDia?.principaisDemandas || ''}
+                onChange={(e) => {
+                  onUpdateReport({
+                    ...report,
+                    analiseDia: {
+                      producaoOk: report.analiseDia?.producaoOk ?? true,
+                      principaisDemandas: e.target.value,
+                      conciliacao: report.analiseDia?.conciliacao || '',
+                    }
+                  });
+                }}
+                placeholder={`Padrão automático: ${autoDemandas}`}
+                className="flex-1 px-3.5 py-2 rounded-xl border border-gray-200 text-xs text-gray-900 bg-white focus:border-emerald-600 focus:ring-2 focus:ring-emerald-600/10 outline-none"
+              />
+              {report.analiseDia?.principaisDemandas && report.analiseDia.principaisDemandas.trim() !== '' && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    onUpdateReport({
+                      ...report,
+                      analiseDia: {
+                        producaoOk: report.analiseDia?.producaoOk ?? true,
+                        principaisDemandas: '',
+                        conciliacao: report.analiseDia?.conciliacao || '',
+                      }
+                    });
+                  }}
+                  className="px-3 py-2 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-semibold transition-colors shrink-0"
+                  title="Voltar ao cálculo 100% automático"
+                >
+                  Usar Automático
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* BARRA DE AÇÕES INFERIOR */}
       <div className="sticky bottom-6 z-40 bg-white/95 backdrop-blur-md rounded-2xl p-4 sm:p-5 shadow-xl border border-emerald-900/10 flex flex-col sm:flex-row items-center justify-between gap-4">
-        <div className="flex items-center gap-3 text-sm text-gray-600">
-          <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
-          <span>
-            Total geral: <strong className="text-emerald-900">{totalAtendimentos} atendimentos</strong> e <strong className="text-emerald-900">{totalEnfermagem} serviços de enfermagem</strong>.
+        <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3 text-sm text-gray-600">
+          <div className="flex items-center gap-2">
+            <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
+            <span>
+              Total: <strong className="text-emerald-900">{totalAtendimentos} atendimentos</strong> e <strong className="text-emerald-900">{totalEnfermagem} enfermagem</strong>.
+            </span>
+          </div>
+          <span className="hidden sm:inline text-gray-300">•</span>
+          <span className="text-xs text-emerald-800 font-medium">
+            Demandas: <strong>{report.analiseDia?.principaisDemandas?.trim() && report.analiseDia.principaisDemandas !== 'admissionais e triagens.' ? report.analiseDia.principaisDemandas : autoDemandas}</strong>
           </span>
         </div>
 

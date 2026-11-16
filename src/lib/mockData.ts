@@ -145,7 +145,7 @@ export const initialReportData: DailyReport = {
   observacoes: '• Fluxo operacional transcorreu normalmente nos turnos matutino e vespertino.\n• Todos os atendimentos admissionais e periódicos concluídos com sucesso.\n• Sem intercorrências médicas graves registradas no plantão.',
   analiseDia: {
     producaoOk: true,
-    principaisDemandas: 'admissionais e triagens.',
+    principaisDemandas: '',
     conciliacao: 'Verificar e conciliar eventuais divergências de registros (ex.: atendimentos x empresas).',
   },
 };

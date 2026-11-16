@@ -6,6 +6,7 @@ import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import { DailyReport } from '@/lib/types';
 import { basePath } from '@/lib/constants';
+import { computePrincipaisDemandas } from '@/lib/demandasAnalysis';
 
 interface ReportViewProps {
   report: DailyReport;
@@ -86,6 +87,12 @@ export const ReportView: React.FC<ReportViewProps> = ({ report, onBackToEdit }) 
     }
   };
   const medicoInfo = getMedicoInfo();
+
+  // Análise dinâmica das maiores demandas do dia
+  const principaisDemandasTexto = 
+    report.analiseDia?.principaisDemandas && report.analiseDia.principaisDemandas.trim() !== '' && report.analiseDia.principaisDemandas !== 'admissionais e triagens.'
+      ? report.analiseDia.principaisDemandas
+      : computePrincipaisDemandas(report);
 
   const formatDateDisplay = (d: string) => {
     if (!d) return '09/11/2026';
@@ -854,7 +861,7 @@ export const ReportView: React.FC<ReportViewProps> = ({ report, onBackToEdit }) 
                 <span className="text-gray-300">•</span>
                 <span className="flex items-center gap-1 font-medium leading-normal">
                   <CheckCircle className="w-3 h-3 text-emerald-600 inline shrink-0" />
-                  Principais demandas: admissionais e triagens.
+                  Principais demandas: {principaisDemandasTexto}
                 </span>
               </div>
               <span className="text-emerald-800 font-bold text-[9px] leading-normal">
