@@ -6,6 +6,7 @@ import { Navbar } from '@/components/Navbar/Navbar';
 import { DailyForm } from '@/components/Dashboard/DailyForm';
 import { ReportView } from '@/components/ReportView/ReportView';
 import { HistoryView } from '@/components/History/HistoryView';
+import { MonthlyReportView } from '@/components/MonthlyReport/MonthlyReportView';
 import { DailyReport } from '@/lib/types';
 import { initialReportData, getEmptyDailyReport } from '@/lib/mockData';
 import {
@@ -21,8 +22,8 @@ import { CheckCircle2, AlertCircle } from 'lucide-react';
 
 export default function Home() {
   const [user, setUser] = useState<{ name: string; role: string; email: string } | null>(null);
-  // A aba inicial é 'history' (Relatórios), seguida de 'form' (Preenchimento) e 'report' (Relatório do Médico)
-  const [currentTab, setCurrentTab] = useState<'form' | 'report' | 'history'>('history');
+  // As abas são: 'history' (Relatórios), 'monthly' (Resumo do Mês), 'form' (Preenchimento) e 'report' (Relatório do Médico)
+  const [currentTab, setCurrentTab] = useState<'form' | 'report' | 'history' | 'monthly'>('history');
   // O formulário de preenchimento começa 100% ZERADO
   const [currentReport, setCurrentReport] = useState<DailyReport>(getEmptyDailyReport());
   const [reportsList, setReportsList] = useState<DailyReport[]>(() => {
@@ -246,6 +247,14 @@ export default function Home() {
             onEditReport={handleEditReport}
             onNewReport={handleNewReport}
             onDeleteReport={handleDeleteReport}
+            onViewMonthlyReport={() => setCurrentTab('monthly')}
+          />
+        )}
+
+        {currentTab === 'monthly' && (
+          <MonthlyReportView
+            reports={reportsList}
+            onBack={() => setCurrentTab('history')}
           />
         )}
 

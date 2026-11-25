@@ -1,12 +1,12 @@
 "use client";
 
 import React from 'react';
-import { FileText, Eye, History, LogOut, Calendar, User as UserIcon } from 'lucide-react';
+import { FileText, Eye, History, LogOut, Calendar, BarChart3, User as UserIcon } from 'lucide-react';
 import { basePath } from '@/lib/constants';
 
 interface NavbarProps {
-  currentTab: 'form' | 'report' | 'history';
-  onTabChange: (tab: 'form' | 'report' | 'history') => void;
+  currentTab: 'form' | 'report' | 'history' | 'monthly';
+  onTabChange: (tab: 'form' | 'report' | 'history' | 'monthly') => void;
   currentUser: { name: string; role: string; email: string };
   onLogout: () => void;
   currentDate: string;
@@ -56,6 +56,18 @@ export const Navbar: React.FC<NavbarProps> = ({
             >
               <History className="w-4 h-4 text-emerald-600" />
               <span>Relatórios</span>
+            </button>
+
+            <button
+              onClick={() => onTabChange('monthly')}
+              className={`flex items-center gap-2 px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all ${
+                currentTab === 'monthly'
+                  ? 'bg-white text-emerald-800 shadow-sm border border-emerald-100'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              <BarChart3 className="w-4 h-4 text-emerald-600" />
+              <span>Resumo do Mês</span>
             </button>
 
             <button

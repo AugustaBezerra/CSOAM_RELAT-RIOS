@@ -1,7 +1,7 @@
 "use client";
 
 import React from 'react';
-import { Calendar, Eye, Edit, Trash2, Plus, FileText, CheckCircle2 } from 'lucide-react';
+import { Calendar, Eye, Edit, Trash2, Plus, FileText, CheckCircle2, BarChart3 } from 'lucide-react';
 import { DailyReport } from '@/lib/types';
 
 interface HistoryViewProps {
@@ -10,6 +10,7 @@ interface HistoryViewProps {
   onEditReport: (report: DailyReport) => void;
   onNewReport: () => void;
   onDeleteReport: (report: DailyReport) => void;
+  onViewMonthlyReport: () => void;
 }
 
 export const HistoryView: React.FC<HistoryViewProps> = ({
@@ -18,6 +19,7 @@ export const HistoryView: React.FC<HistoryViewProps> = ({
   onEditReport,
   onNewReport,
   onDeleteReport,
+  onViewMonthlyReport,
 }) => {
   const formatDateDisplay = (d: string) => {
     if (!d) return '--/--/----';
@@ -43,13 +45,24 @@ export const HistoryView: React.FC<HistoryViewProps> = ({
           </p>
         </div>
 
-        <button
-          onClick={onNewReport}
-          className="inline-flex items-center gap-2 px-5 py-3 rounded-2xl bg-[#008C45] hover:bg-[#007037] text-white text-sm font-bold shadow-md shadow-emerald-700/20 transition-all active:scale-[0.98]"
-        >
-          <Plus className="w-4 h-4" />
-          <span>Novo Relatório Diário</span>
-        </button>
+        <div className="flex flex-wrap items-center gap-3">
+          <button
+            onClick={onViewMonthlyReport}
+            className="inline-flex items-center gap-2 px-5 py-3 rounded-2xl bg-emerald-50 hover:bg-emerald-100/90 text-emerald-900 border border-emerald-300/80 text-sm font-extrabold shadow-sm transition-all active:scale-[0.98]"
+            title="Visualizar resumo consolidado do mês com gráficos e totais"
+          >
+            <BarChart3 className="w-4 h-4 text-emerald-700" />
+            <span>Resumo do Mês</span>
+          </button>
+
+          <button
+            onClick={onNewReport}
+            className="inline-flex items-center gap-2 px-5 py-3 rounded-2xl bg-[#008C45] hover:bg-[#007037] text-white text-sm font-bold shadow-md shadow-emerald-700/20 transition-all active:scale-[0.98]"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Novo Relatório Diário</span>
+          </button>
+        </div>
       </div>
 
       {/* Lista de Relatórios */}
