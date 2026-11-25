@@ -1,7 +1,7 @@
 "use client";
 
 import React from 'react';
-import { Calendar, Eye, Edit, Trash2, Plus, FileText, CheckCircle2, BarChart3 } from 'lucide-react';
+import { Calendar, Eye, Edit, Trash2, Plus, FileText, CheckCircle2, BarChart3, RefreshCw } from 'lucide-react';
 import { DailyReport } from '@/lib/types';
 
 interface HistoryViewProps {
@@ -11,6 +11,8 @@ interface HistoryViewProps {
   onNewReport: () => void;
   onDeleteReport: (report: DailyReport) => void;
   onViewMonthlyReport: () => void;
+  onRefresh?: () => void;
+  refreshing?: boolean;
 }
 
 export const HistoryView: React.FC<HistoryViewProps> = ({
@@ -20,6 +22,8 @@ export const HistoryView: React.FC<HistoryViewProps> = ({
   onNewReport,
   onDeleteReport,
   onViewMonthlyReport,
+  onRefresh,
+  refreshing = false,
 }) => {
   const formatDateDisplay = (d: string) => {
     if (!d) return '--/--/----';
@@ -46,6 +50,18 @@ export const HistoryView: React.FC<HistoryViewProps> = ({
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
+          {onRefresh && (
+            <button
+              onClick={onRefresh}
+              disabled={refreshing}
+              className="inline-flex items-center gap-1.5 px-4 py-3 rounded-2xl bg-white hover:bg-gray-50 text-gray-700 border border-gray-200 text-sm font-bold shadow-xs transition-all active:scale-[0.98] disabled:opacity-50"
+              title="Sincronizar relatórios com o banco de dados na nuvem"
+            >
+              <RefreshCw className={`w-4 h-4 text-emerald-700 ${refreshing ? 'animate-spin' : ''}`} />
+              <span className="hidden sm:inline">{refreshing ? 'Atualizando...' : 'Sincronizar'}</span>
+            </button>
+          )}
+
           <button
             onClick={onViewMonthlyReport}
             className="inline-flex items-center gap-2 px-5 py-3 rounded-2xl bg-emerald-50 hover:bg-emerald-100/90 text-emerald-900 border border-emerald-300/80 text-sm font-extrabold shadow-sm transition-all active:scale-[0.98]"

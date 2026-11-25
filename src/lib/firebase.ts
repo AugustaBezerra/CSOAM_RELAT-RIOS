@@ -118,11 +118,11 @@ export async function saveReportToFirebase(report: DailyReport): Promise<string>
   // 1. SEMPRE grava localmente PRIMEIRO para ser 100% imediato e garantido
   cacheLocally(reportToSave);
 
-  // 2. Se o Firestore estiver configurado, tenta sincronizar na nuvem com timeout de 2.5s
+  // 2. Se o Firestore estiver configurado, tenta sincronizar na nuvem com timeout de 6s
   if (db) {
     try {
       const timeoutPromise = new Promise<never>((_, reject) =>
-        setTimeout(() => reject(new Error('Firestore timeout')), 2500)
+        setTimeout(() => reject(new Error('Firestore timeout')), 6000)
       );
 
       const firestoreAction = async () => {
@@ -198,44 +198,137 @@ export async function deleteReportFromFirebase(id?: string, date?: string): Prom
   return true;
 }
 
-// Helper to fetch all reports from Firestore
+// Conversores para suporte à REST API nativa do Firestore (fallback ultrarrápido)
+function convertFirestoreField(val: any): any {
+  if (!val) return null;
+  if ('stringValue' in val) return val.stringValue;
+  if ('integerValue' in val) return parseInt(val.integerValue, 10);
+  if ('doubleValue' in val) return parseFloat(val.doubleValue);
+  if ('booleanValue' in val) return val.booleanValue;
+  if ('timestampValue' in val) return val.timestampValue;
+  if ('mapValue' in val) {
+    const res: any = {};
+    const f = val.mapValue.fields || {};
+    for (const k in f) {
+      res[k] = convertFirestoreField(f[k]);
+    }
+    return res;
+  }
+  if ('arrayValue' in val) {
+    const arr = val.arrayValue.values || [];
+    return arr.map(convertFirestoreField);
+  }
+  return null;
+}
+
+function parseFirestoreRestDoc(doc: any): DailyReport {
+  const id = doc.name ? doc.name.split('/').pop() : '';
+  const f = doc.fields || {};
+  const obj: any = {};
+  for (const k in f) {
+    obj[k] = convertFirestoreField(f[k]);
+  }
+  obj.id = id;
+  return obj as DailyReport;
+}
+
+/**
+ * Busca direta via REST API do Firestore
+ * Não depende de conexões WebSocket/WebChannel do SDK e responde em poucos milissegundos.
+ */
+export async function fetchReportsFromFirestoreRest(): Promise<DailyReport[]> {
+  const projectId = firebaseConfig.projectId || 'csoam-relatorios';
+  const url = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/${COLLECTION_NAME}?pageSize=100`;
+
+  const controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
+  const timeoutId = setTimeout(() => controller?.abort(), 7000);
+
+  try {
+    const res = await fetch(url, {
+      signal: controller?.signal,
+      headers: {
+        'Accept': 'application/json',
+      }
+    });
+    clearTimeout(timeoutId);
+
+    if (!res.ok) {
+      throw new Error(`REST fetch returned status ${res.status}`);
+    }
+
+    const data = await res.json();
+    const docs = data.documents || [];
+    const reports: DailyReport[] = docs
+      .map(parseFirestoreRestDoc)
+      .filter((r: DailyReport) => r && !isReportDeleted(r.id, r.data));
+
+    return reports;
+  } catch (e) {
+    clearTimeout(timeoutId);
+    console.warn("Firestore REST fallback warning:", e);
+    return [];
+  }
+}
+
+// Helper para buscar todos os relatórios da nuvem (SDK + REST Fallback)
 export async function getReportsFromFirebase(): Promise<DailyReport[]> {
   const localReports = getLocalReports();
+  let cloudReports: DailyReport[] = [];
 
+  // 1. Tenta buscar via Firebase SDK
   if (db) {
     try {
       const timeoutPromise = new Promise<never>((_, reject) =>
-        setTimeout(() => reject(new Error('Firestore timeout')), 2500)
+        setTimeout(() => reject(new Error('Firestore SDK timeout')), 4500)
       );
 
       const firestoreFetch = async () => {
         const q = query(collection(db, COLLECTION_NAME), orderBy('data', 'desc'));
         const snapshot = await getDocs(q);
-        const cloudReports: DailyReport[] = [];
+        const list: DailyReport[] = [];
         snapshot.forEach(docSnap => {
           const report = { id: docSnap.id, ...docSnap.data() } as DailyReport;
-          // Se foi marcado como excluído, remove da nuvem e não lista
           if (isReportDeleted(report.id, report.data)) {
             deleteDoc(doc(db, COLLECTION_NAME, docSnap.id)).catch(() => {});
           } else {
-            cloudReports.push(report);
+            list.push(report);
           }
         });
-        return cloudReports;
+        return list;
       };
 
-      const fetched = await Promise.race([firestoreFetch(), timeoutPromise]);
-      if (fetched && fetched.length > 0) {
-        fetched.forEach(cr => {
-          if (!isReportDeleted(cr.id, cr.data)) {
-            cacheLocally(cr);
-          }
-        });
-        return getLocalReports();
-      }
+      cloudReports = await Promise.race([firestoreFetch(), timeoutPromise]);
     } catch (error) {
-      console.warn("Firestore fetch warning (usando relatórios locais):", error);
+      console.warn("Firestore SDK fetch lento ou falhou, acionando REST API direta:", error);
     }
+  }
+
+  // 2. Se o SDK não retornou documentos, aciona imediatamente a REST API
+  if (!cloudReports || cloudReports.length === 0) {
+    try {
+      cloudReports = await fetchReportsFromFirestoreRest();
+    } catch (e) {
+      console.warn("REST API fallback failed:", e);
+    }
+  }
+
+  // 3. Se obteve relatórios da nuvem, atualiza o cache local e mescla com relatórios locais
+  if (cloudReports && cloudReports.length > 0) {
+    cloudReports.forEach(cr => {
+      if (!isReportDeleted(cr.id, cr.data)) {
+        cacheLocally(cr);
+      }
+    });
+
+    const map = new Map<string, DailyReport>();
+    cloudReports.forEach(r => map.set(r.data, r));
+    localReports.forEach(r => {
+      if (!map.has(r.data) && !isReportDeleted(r.id, r.data)) {
+        map.set(r.data, r);
+      }
+    });
+
+    return Array.from(map.values()).sort((a, b) => b.data.localeCompare(a.data));
   }
 
   return localReports.filter(r => !isReportDeleted(r.id, r.data));

@@ -41,7 +41,41 @@ export default function Home() {
     return Array.from(map.values()).sort((a, b) => b.data.localeCompare(a.data));
   });
   const [saving, setSaving] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const [toastMessage, setToastMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
+
+  const handleRefreshReports = async (showNotification = false) => {
+    setRefreshing(true);
+    try {
+      const fetched = await getReportsFromFirebase();
+      if (fetched && fetched.length > 0) {
+        setReportsList(() => {
+          const map = new Map<string, DailyReport>();
+          if (!isReportDeleted(initialReportData.id, initialReportData.data)) {
+            map.set(initialReportData.data, initialReportData);
+          }
+          fetched.forEach(r => {
+            if (!isReportDeleted(r.id, r.data)) {
+              map.set(r.data, r);
+            }
+          });
+          return Array.from(map.values()).sort((a, b) => b.data.localeCompare(a.data));
+        });
+        if (showNotification) {
+          showToast(`${fetched.length} relatórios sincronizados da nuvem!`, "success");
+        }
+      } else if (showNotification) {
+        showToast("Nenhum relatório encontrado.", "success");
+      }
+    } catch (e) {
+      console.warn("Cloud reports load warning:", e);
+      if (showNotification) {
+        showToast("Erro ao sincronizar da nuvem.", "error");
+      }
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   // Check login in Firebase & localStorage
   useEffect(() => {
@@ -72,48 +106,30 @@ export default function Home() {
     }
   }, []);
 
-  // Carrega imediatamente os relatórios salvos no navegador (sem esperar a nuvem)
+  // Carrega imediatamente os relatórios salvos no navegador e sincroniza da nuvem
   useEffect(() => {
     try {
       const cached = getLocalReports();
-      setReportsList(() => {
-        const map = new Map<string, DailyReport>();
-        if (!isReportDeleted(initialReportData.id, initialReportData.data)) {
-          map.set(initialReportData.data, initialReportData);
-        }
-        cached.forEach(r => {
-          if (!isReportDeleted(r.id, r.data)) {
-            map.set(r.data, r);
+      if (cached && cached.length > 0) {
+        setReportsList(() => {
+          const map = new Map<string, DailyReport>();
+          if (!isReportDeleted(initialReportData.id, initialReportData.data)) {
+            map.set(initialReportData.data, initialReportData);
           }
+          cached.forEach(r => {
+            if (!isReportDeleted(r.id, r.data)) {
+              map.set(r.data, r);
+            }
+          });
+          return Array.from(map.values()).sort((a, b) => b.data.localeCompare(a.data));
         });
-        return Array.from(map.values()).sort((a, b) => b.data.localeCompare(a.data));
-      });
+      }
     } catch (e) {
       console.warn("Local cache load warning:", e);
     }
 
-    async function loadReports() {
-      try {
-        const fetched = await getReportsFromFirebase();
-        if (fetched) {
-          setReportsList(() => {
-            const map = new Map<string, DailyReport>();
-            if (!isReportDeleted(initialReportData.id, initialReportData.data)) {
-              map.set(initialReportData.data, initialReportData);
-            }
-            fetched.forEach(r => {
-              if (!isReportDeleted(r.id, r.data)) {
-                map.set(r.data, r);
-              }
-            });
-            return Array.from(map.values()).sort((a, b) => b.data.localeCompare(a.data));
-          });
-        }
-      } catch (e) {
-        console.warn("Cloud reports load warning:", e);
-      }
-    }
-    loadReports();
+    // Busca da nuvem (Firebase SDK + REST)
+    handleRefreshReports(false);
   }, []);
 
   const handleLoginSuccess = (userData: { name: string; role: string; email: string }) => {
@@ -248,6 +264,8 @@ export default function Home() {
             onNewReport={handleNewReport}
             onDeleteReport={handleDeleteReport}
             onViewMonthlyReport={() => setCurrentTab('monthly')}
+            onRefresh={() => handleRefreshReports(true)}
+            refreshing={refreshing}
           />
         )}
 
